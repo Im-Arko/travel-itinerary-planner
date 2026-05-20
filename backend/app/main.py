@@ -10,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from config import get_settings
-from database.session import get_db
-from database.models import User
+from database.session import get_db, engine
+from database.models import User, Base
 from services.auth_service import get_current_user, oauth2
 
 # Routers
@@ -19,6 +19,8 @@ from routers import auth, preferences, destinations, itineraries
 
 settings = get_settings()
 
+# Create database tables
+Base.metadata.create_all(bind=engine)
 # ── App ────────────────────────────────────────────────────────
 
 app = FastAPI(

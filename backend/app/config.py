@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from urllib.parse import quote_plus
 
 
 class Settings(BaseSettings):
@@ -10,7 +11,7 @@ class Settings(BaseSettings):
     db_port: int = 3306
     db_name: str = "travel_app"
     db_user: str = "travel_user"
-    db_password: str = "password"
+    db_password: str = ""
 
     # Security
     secret_key: str = "change-me-in-production"
@@ -34,8 +35,10 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        password = quote_plus(self.db_password)
+
         return (
-            f"mysql+pymysql://{self.db_user}:{self.db_password}"
+            f"mysql+pymysql://{self.db_user}:{password}"
             f"@{self.db_host}:{self.db_port}/{self.db_name}"
         )
 

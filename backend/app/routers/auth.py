@@ -16,10 +16,13 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == payload.username).first():
         raise HTTPException(status_code=400, detail="Username already taken")
 
+    #print(payload.password)
+    #print(type(payload.password))
+    #print(len(payload.password))
     user = User(
         email=payload.email,
         username=payload.username,
-        hashed_password=hash_password(payload.password),
+        password_hash=hash_password(payload.password),
         full_name=payload.full_name,
     )
     db.add(user)
@@ -31,7 +34,7 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
-    if not user or not verify_password(payload.password, user.hashed_password):
+    if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account deactivated")
