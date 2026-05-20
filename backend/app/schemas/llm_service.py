@@ -1,20 +1,21 @@
 """
 LLM Service
 ──────────────────────────────────────────────────────────────
-Uses LangChain + OpenAI to generate personalised day-wise travel
-itineraries based on user preferences and matched destinations.
+Uses OpenAI to generate personalised day-wise travel itineraries
+based on user preferences and matched destinations.
 """
 
 import json
 import logging
 from typing import List, Optional
 
+import openai
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from config import get_settings
+from ..config import get_settings
 
-logger   = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
@@ -67,16 +68,14 @@ Return the itinerary as a valid JSON object matching this schema:
 {format_instructions}"""
 
 
-# ── LLM Factory ────────────────────────────────────────────────
+# ── OpenAI helpers ─────────────────────────────────────────────
 
-def _get_llm():
-    from langchain_openai import ChatOpenAI
-
-    return ChatOpenAI(
-        model       = "gpt-4o-mini",
-        temperature = 0.7,
-        api_key     = settings.openai_api_key,
-    )
+def _configure_openai() -> None:
+    if not settings.openai_api_key:
+        raise RuntimeError(
+            "OPENAI_API_KEY is not set. Set it in .env or the environment and restart the backend."
+        )
+    openai.api_key = settings.openai_api_key
 
 
 # ── Main generation function ───────────────────────────────────
@@ -95,13 +94,10 @@ def generate_itinerary(
     dest_context:  str       = "",
 ) -> dict:
     """
-    Call OpenAI via LangChain to generate a structured itinerary.
+    Call OpenAI to generate a structured itinerary.
     Returns a dict with keys matching ItineraryLLM schema.
     """
-    from langchain.output_parsers import PydanticOutputParser
-    from langchain_core.messages import SystemMessage, HumanMessage
-
-    parser = PydanticOutputParser(pydantic_object=ItineraryLLM)
+    _configure_openai()
 
     prompt_text = ITINERARY_PROMPT.format(
         destination     = destination,
@@ -114,34 +110,107 @@ def generate_itinerary(
         dietary         = dietary or "none",
         accessibility   = "yes - please ensure activities are accessible" if accessibility else "no",
         dest_context    = dest_context or f"{destination} is a wonderful travel destination.",
-        format_instructions = parser.get_format_instructions(),
+        format_instructions = json.dumps({
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "destination_name": {"type": "string"},
+                "summary": {"type": "string"},
+                "total_budget_est": {"type": "number"},
+                "best_time_to_go": {"type": "string"},
+                "packing_tips": {"type": "array", "items": {"type": "string"}},
+                "days": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "day_number": {"type": "integer"},
+                            "theme": {"type": "string"},
+                            "morning": {"type": "string"},
+                            "afternoon": {"type": "string"},
+                            "evening": {"type": "string"},
+                            "accommodation": {"type": "string"},
+                            "estimated_cost": {"type": "number"},
+                            "tips": {"type": "string"},
+                        },
+                        "required": ["day_number", "theme", "morning", "afternoon", "evening", "accommodation", "estimated_cost", "tips"],
+                    },
+                },
+            },
+            "required": ["title", "destination_name", "summary", "total_budget_est", "best_time_to_go", "packing_tips", "days"],
+        }),
     )
 
-    llm      = _get_llm()
-    messages = [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=prompt_text)]
-
     logger.info("Generating itinerary for %s (%d days, %s budget)", destination, duration, budget)
-    response = llm.invoke(messages)
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt_text},
+            ],
+            temperature=0.7,
+            max_tokens=1500,
+        )
+    except Exception as exc:
+        logger.exception("OpenAI request failed")
+        raise RuntimeError(f"OpenAI request failed: {exc}") from exc
 
-    # Extract JSON from response
-    raw = response.content
-    # Strip markdown fences if present
+    # Try to robustly extract the assistant content
+    try:
+        # Support mapping-like and attribute-style responses
+        if hasattr(response, "choices"):
+            choices = response.choices
+        else:
+            choices = response.get("choices", [])
+        if not choices:
+            raise ValueError("no choices returned from OpenAI")
+        first = choices[0]
+        # try attribute access then dict access
+        if hasattr(first, "message"):
+            raw = first.message.get("content") if isinstance(first.message, dict) else getattr(first.message, "content", None)
+        else:
+            raw = first.get("message", {}).get("content")
+        if raw is None:
+            # older OpenAI responses might put text in 'text' or 'content'
+            raw = getattr(first, "text", None) or first.get("text") if isinstance(first, dict) else None
+        if raw is None:
+            raise ValueError("could not extract assistant content from OpenAI response")
+        raw = raw.strip()
+    except Exception as exc:
+        logger.exception("Failed to extract content from OpenAI response: %s", exc)
+        raise RuntimeError(f"Failed to extract OpenAI response content: {exc}") from exc
+
     if "```json" in raw:
         raw = raw.split("```json")[1].split("```")[0].strip()
     elif "```" in raw:
         raw = raw.split("```")[1].split("```")[0].strip()
 
-    parsed = json.loads(raw)
-    return parsed
+    try:
+        parsed = json.loads(raw)
+    except Exception as exc:
+        logger.exception("Failed to parse JSON from LLM output: %s", exc)
+        raise ValueError(f"LLM returned invalid JSON: {exc}\nRAW:\n{raw}") from exc
+
+    # Validate schema and return plain dict
+    itinerary = ItineraryLLM.model_validate(parsed)
+    return itinerary.model_dump()
 
 
 def generate_destination_summary(dest_context: str, preferences: dict) -> str:
     """Generate a short 'why this destination suits you' explanation."""
-    from langchain_core.messages import HumanMessage
+    _configure_openai()
 
-    llm = _get_llm()
-    prompt = f"""Given this traveller profile: {json.dumps(preferences)}
-And this destination: {dest_context}
-Write 2 sentences explaining why this destination is a great match. Be specific and enthusiastic."""
-    response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content.strip()
+    prompt = (
+        f"Given this traveller profile: {json.dumps(preferences)}\n"
+        f"And this destination: {dest_context}\n"
+        "Write 2 sentences explaining why this destination is a great match. Be specific and enthusiastic."
+    )
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
+        temperature=0.7,
+        max_tokens=200,
+    )
+    return response.choices[0].message["content"].strip()

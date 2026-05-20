@@ -1,10 +1,21 @@
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from urllib.parse import quote_plus
+from dotenv import load_dotenv
 
+# Explicitly load .env from backend directory
+_backend_dir = Path(__file__).resolve().parent.parent
+_env_file = _backend_dir / ".env"
+if _env_file.exists():
+    load_dotenv(_env_file)
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=_env_file,
+        env_file_encoding='utf-8'
+    )
 
     # Database
     db_host: str = "localhost"

@@ -3,11 +3,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from database.session import get_db
-from database.models import User, Destination
-from schemas.schemas import DestinationOut, DestinationSearchResult, IngestRequest, IngestResponse
-from services.auth_service import get_current_user
-from services import vector_store
+from ..database.session import get_db
+from ..database.models import User, Destination
+from ..schemas.schemas import DestinationOut, DestinationSearchResult, IngestRequest, IngestResponse
+from ..services.auth_service import get_current_user
+from ..services import vector_store
 
 router = APIRouter(prefix="/api/destinations", tags=["Destinations"])
 

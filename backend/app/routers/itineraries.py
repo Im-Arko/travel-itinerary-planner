@@ -3,14 +3,14 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from database.session import get_db
-from database.models import User, Itinerary, ItineraryDay, Destination
-from schemas.schemas import (
+from ..database.session import get_db
+from ..database.models import User, Itinerary, ItineraryDay, Destination
+from ..schemas.schemas import (
     ItineraryGenerateRequest, ItineraryOut, ItineraryWithDays,
     ItineraryUpdate, DayPlan,
 )
-from services.auth_service import get_current_user
-from services import vector_store, llm_service
+from ..services.auth_service import get_current_user
+from ..services import vector_store, llm_service
 
 router = APIRouter(prefix="/api/itineraries", tags=["Itineraries"])
 
@@ -60,18 +60,23 @@ def generate_itinerary(
     dest_ctx    = best_match["document"]
 
     # 3. Generate itinerary with LLM
-    raw = llm_service.generate_itinerary(
-        destination  = f"{best_match['name']}, {best_match['country']}",
-        duration     = payload.trip_duration,
-        budget       = payload.budget,
-        travel_style = payload.travel_style,
-        climate      = payload.preferred_climate,
-        dest_type    = payload.destination_type,
-        interests    = payload.interests,
-        dietary      = None,
-        accessibility = False,
-        dest_context = dest_ctx,
-    )
+    try:
+        raw = llm_service.generate_itinerary(
+            destination  = f"{best_match['name']}, {best_match['country']}",
+            duration     = payload.trip_duration,
+            budget       = payload.budget,
+            travel_style = payload.travel_style,
+            climate      = payload.preferred_climate,
+            dest_type    = payload.destination_type,
+            interests    = payload.interests,
+            dietary      = None,
+            accessibility = False,
+            dest_context = dest_ctx,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=f"LLM output parse failed: {exc}") from exc
 
     # 4. Persist to DB
     itin = Itinerary(

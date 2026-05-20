@@ -7,9 +7,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import hashlib, secrets
 
-from database.models import User, RefreshToken
-from database.session import get_db
-from config import get_settings
+from ..database.models import User, RefreshToken
+from ..database.session import get_db
+from ..config import get_settings
 
 settings  = get_settings()
 pwd_ctx   = CryptContext(schemes=["bcrypt"], deprecated="auto")

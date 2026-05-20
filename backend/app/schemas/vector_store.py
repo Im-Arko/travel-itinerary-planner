@@ -14,8 +14,8 @@ from chromadb.config import Settings as ChromaSettings
 from sentence_transformers import SentenceTransformer
 from sqlalchemy.orm import Session
 
-from config import get_settings
-from database.models import Destination
+from ..config import get_settings
+from ..database.models import Destination
 
 logger   = logging.getLogger(__name__)
 settings = get_settings()
