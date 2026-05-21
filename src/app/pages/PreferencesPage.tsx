@@ -1,40 +1,67 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePreferences, UserPreferences } from '../context/PreferencesContext';
+import { preferencesApi } from '../services/api';
+import { errorMessage, normalizeBudget, normalizeClimate } from '../utils/formatters';
 import { Slider } from '@mui/material';
-import { Settings, Heart, DollarSign, Calendar, Thermometer, MapPin, Save } from 'lucide-react';
+import { Settings, Heart, DollarSign, Calendar, Thermometer, MapPin, Save, AlertCircle } from 'lucide-react';
 
-const travelStyles = ['Adventure', 'Luxury', 'Budget', 'Cultural', 'Relaxation', 'Family'];
-const budgetRanges = ['Budget ($500-1500)', 'Moderate ($1500-3000)', 'Luxury ($3000+)'];
-const climates = ['Tropical', 'Temperate', 'Arctic', 'Desert', 'Mediterranean', 'Mountain'];
+const travelStyles = ['solo', 'couple', 'family', 'adventure', 'cultural', 'relaxation', 'luxury', 'budget'];
+const budgetRanges = ['budget', 'moderate', 'luxury'];
+const climates = ['any', 'tropical', 'temperate', 'arid', 'cold', 'mediterranean'];
 const interestOptions = [
   'Beach', 'Mountains', 'Cities', 'History', 'Food', 'Art',
   'Shopping', 'Nightlife', 'Wildlife', 'Photography', 'Wellness', 'Adventure Sports'
 ];
 
 export function PreferencesPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const { preferences, savePreferences } = usePreferences();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<UserPreferences>({
     travelStyle: preferences?.travelStyle || '',
-    budget: preferences?.budget || '',
+    budget: normalizeBudget(preferences?.budget),
     tripDuration: preferences?.tripDuration || 7,
-    climate: preferences?.climate || '',
+    climate: normalizeClimate(preferences?.climate),
     interests: preferences?.interests || [],
     destinationHint: preferences?.destinationHint || ''
   });
 
-  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingPrefs, setIsLoadingPrefs] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       navigate('/login');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    setIsLoadingPrefs(true);
+    preferencesApi.get()
+      .then(pref => {
+        const mapped = {
+          travelStyle: pref.travel_style || '',
+          budget: normalizeBudget(pref.budget),
+          tripDuration: pref.trip_duration,
+          climate: normalizeClimate(pref.preferred_climate),
+          interests: pref.interests,
+          destinationHint: '',
+        };
+        setFormData(mapped);
+        savePreferences(mapped);
+      })
+      .catch(err => {
+        const message = errorMessage(err, '');
+        if (message && message !== 'Preferences not found') setError(message);
+      })
+      .finally(() => setIsLoadingPrefs(false));
+  }, [isAuthenticated, savePreferences]);
 
   const toggleInterest = (interest: string) => {
     setFormData(prev => ({
@@ -47,16 +74,37 @@ export function PreferencesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
     setSaveSuccess(false);
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    savePreferences(formData);
-    setIsSaving(false);
-    setSaveSuccess(true);
-
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setError('');
+    try {
+      const saved = await preferencesApi.save({
+        budget: normalizeBudget(formData.budget),
+        preferred_climate: normalizeClimate(formData.climate),
+        destination_type: 'any',
+        trip_duration: formData.tripDuration,
+        travel_style: formData.travelStyle,
+        interests: formData.interests,
+        dietary_needs: null,
+        accessibility: false,
+      });
+      const mapped = {
+        travelStyle: saved.travel_style,
+        budget: normalizeBudget(saved.budget),
+        tripDuration: saved.trip_duration,
+        climate: normalizeClimate(saved.preferred_climate),
+        interests: saved.interests,
+        destinationHint: formData.destinationHint,
+      };
+      setFormData(mapped);
+      savePreferences(mapped);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      setError(errorMessage(err, 'Unable to save preferences.'));
+    }
   };
+
+  if (loading) return null;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
@@ -77,7 +125,20 @@ export function PreferencesPage() {
           {saveSuccess && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
               <Save className="w-5 h-5" />
-              <span>Preferences saved successfully!</span>
+              <span>Preferences saved to your account.</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {isLoadingPrefs && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
+              Loading saved backend preferences...
             </div>
           )}
 
@@ -214,11 +275,11 @@ export function PreferencesPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isSaving || !formData.travelStyle || !formData.budget || !formData.climate}
+            disabled={!formData.travelStyle || !formData.budget || !formData.climate}
             className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Save className="w-5 h-5" />
-            {isSaving ? 'Saving...' : 'Save Preferences'}
+            Save For Generation
           </button>
         </form>
       </div>

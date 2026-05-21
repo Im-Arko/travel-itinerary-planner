@@ -1,81 +1,108 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { mockDestinations, Destination } from '../data/mockDestinations';
-import { Search, Filter, MapPin, DollarSign, Thermometer, Tag, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Destination, destinationsApi } from '../services/api';
+import { destinationImage, errorMessage, parseTags, titleCase } from '../utils/formatters';
+import { Search, Filter, MapPin, DollarSign, Thermometer, Tag, Database, AlertCircle } from 'lucide-react';
 
 export function DestinationsPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [budgetFilter, setBudgetFilter] = useState<string>('all');
   const [climateFilter, setClimateFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>(mockDestinations);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isIngesting, setIsIngesting] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       navigate('/login');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   useEffect(() => {
-    let filtered = mockDestinations;
+    if (!isAuthenticated) return;
 
-    // Search filter (semantic search simulation)
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(dest =>
-        dest.name.toLowerCase().includes(query) ||
-        dest.country.toLowerCase().includes(query) ||
-        dest.description.toLowerCase().includes(query) ||
-        dest.tags.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
+    const controller = new AbortController();
+    const loadDestinations = async () => {
+      setIsLoading(true);
+      setError('');
+      try {
+        const params = {
+          budget: budgetFilter === 'all' ? undefined : budgetFilter,
+          climate: climateFilter === 'all' ? undefined : climateFilter,
+          dest_type: typeFilter === 'all' ? undefined : typeFilter,
+          limit: 50,
+        };
 
-    // Budget filter
-    if (budgetFilter !== 'all') {
-      filtered = filtered.filter(dest => dest.budget === budgetFilter);
-    }
+        if (searchQuery.trim()) {
+          const results = await destinationsApi.search({
+            q: searchQuery.trim(),
+            ...params,
+            limit: 20,
+          });
+          if (!controller.signal.aborted) {
+            setDestinations(results.map(result => result.destination));
+          }
+        } else {
+          const data = await destinationsApi.list(params);
+          if (!controller.signal.aborted) setDestinations(data);
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError(errorMessage(err, 'Unable to load destinations.'));
+          setDestinations([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
 
-    // Climate filter
-    if (climateFilter !== 'all') {
-      filtered = filtered.filter(dest => dest.climate === climateFilter);
-    }
+    const timeout = window.setTimeout(loadDestinations, searchQuery ? 300 : 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [budgetFilter, climateFilter, isAuthenticated, searchQuery, typeFilter]);
 
-    // Type filter
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(dest => dest.type === typeFilter);
-    }
-
-    setFilteredDestinations(filtered);
-  }, [searchQuery, budgetFilter, climateFilter, typeFilter]);
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'indexed':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-600" />;
-      case 'failed':
-        return <AlertCircle className="w-4 h-4 text-red-600" />;
-      default:
-        return null;
+  const handleIngest = async () => {
+    setIsIngesting(true);
+    setError('');
+    try {
+      await destinationsApi.ingest();
+    } catch (err) {
+      setError(errorMessage(err, 'Unable to ingest destinations into the vector store.'));
+    } finally {
+      setIsIngesting(false);
     }
   };
+
+  if (loading) return null;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-3">Explore Destinations</h1>
-          <p className="text-lg text-gray-600">
-            Search through our curated destinations using natural language
-          </p>
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-800 mb-3">Explore Destinations</h1>
+            <p className="text-lg text-gray-600">
+              Search backend destinations with filters and vector search.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleIngest}
+            disabled={isIngesting}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-3 font-semibold text-white shadow-md transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Database className="h-5 w-5" />
+            {isIngesting ? 'Ingesting...' : 'Ingest Destinations'}
+          </button>
         </div>
 
-        {/* Search Bar */}
         <div className="bg-white rounded-xl shadow-md p-4 mb-6">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -83,13 +110,12 @@ export function DestinationsPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Try 'tropical beaches' or 'mountain adventures' or 'cultural cities'..."
+              placeholder="Try tropical beaches, mountain adventures, or cultural cities..."
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
-        {/* Filters */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="w-5 h-5 text-gray-600" />
@@ -97,153 +123,110 @@ export function DestinationsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Budget Filter */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <DollarSign className="w-4 h-4 text-blue-600" />
                 Budget
               </label>
-              <select
-                value={budgetFilter}
-                onChange={(e) => setBudgetFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+              <select value={budgetFilter} onChange={(e) => setBudgetFilter(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="all">All Budgets</option>
-                <option value="low">Budget-Friendly</option>
-                <option value="medium">Moderate</option>
-                <option value="high">Luxury</option>
+                <option value="budget">Budget</option>
+                <option value="moderate">Moderate</option>
+                <option value="luxury">Luxury</option>
               </select>
             </div>
 
-            {/* Climate Filter */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <Thermometer className="w-4 h-4 text-blue-600" />
                 Climate
               </label>
-              <select
-                value={climateFilter}
-                onChange={(e) => setClimateFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+              <select value={climateFilter} onChange={(e) => setClimateFilter(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="all">All Climates</option>
                 <option value="tropical">Tropical</option>
                 <option value="temperate">Temperate</option>
-                <option value="arctic">Arctic</option>
-                <option value="desert">Desert</option>
+                <option value="arid">Arid</option>
+                <option value="cold">Cold</option>
                 <option value="mediterranean">Mediterranean</option>
-                <option value="mountain">Mountain</option>
               </select>
             </div>
 
-            {/* Type Filter */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <Tag className="w-4 h-4 text-blue-600" />
                 Type
               </label>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+              <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="all">All Types</option>
                 <option value="city">City</option>
-                <option value="island">Island</option>
-                <option value="nature">Nature</option>
-                <option value="historical">Historical</option>
+                <option value="beach">Beach</option>
+                <option value="mountain">Mountain</option>
+                <option value="countryside">Countryside</option>
+                <option value="adventure">Adventure</option>
+                <option value="cultural">Cultural</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* Results Count */}
+        {error && (
+          <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+            <AlertCircle className="h-5 w-5" />
+            <span>{error}</span>
+          </div>
+        )}
+
         <div className="mb-6">
           <p className="text-gray-600">
-            Found <span className="font-semibold text-gray-800">{filteredDestinations.length}</span> destinations
+            {isLoading ? 'Loading destinations...' : <>Found <span className="font-semibold text-gray-800">{destinations.length}</span> destinations</>}
           </p>
         </div>
 
-        {/* Destinations Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDestinations.map(destination => (
-            <Link
-              key={destination.id}
-              to={`/destinations/${destination.id}`}
-              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group"
-            >
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={destination.imageUrl}
-                  alt={destination.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium capitalize">
-                  {destination.budget}
-                </div>
-              </div>
-
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-1">{destination.name}</h3>
-                    <div className="flex items-center gap-1 text-gray-600 text-sm">
-                      <MapPin className="w-4 h-4" />
-                      {destination.country}
-                    </div>
+          {destinations.map(destination => {
+            const tags = parseTags(destination.tags);
+            return (
+              <Link key={destination.id} to={`/destinations/${destination.id}`} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group">
+                <div className="relative h-48 overflow-hidden">
+                  <img src={destinationImage(destination)} alt={destination.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium capitalize">
+                    {titleCase(destination.budget_level)}
                   </div>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                  {destination.description}
-                </p>
-
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {destination.tags.slice(0, 3).map(tag => (
-                    <span
-                      key={tag}
-                      className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {destination.tags.length > 3 && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                      +{destination.tags.length - 3}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1">
-                    {getStatusIcon(destination.vectorStatus)}
-                    <span className="text-gray-600">
-                      Vector: {destination.vectorStatus}
-                    </span>
+                <div className="p-5">
+                  <h3 className="text-xl font-bold text-gray-800 mb-1">{destination.name}</h3>
+                  <div className="flex items-center gap-1 text-gray-600 text-sm mb-3">
+                    <MapPin className="w-4 h-4" />
+                    {destination.country}
                   </div>
-                  <div className="flex items-center gap-1">
-                    {destination.ingested ? (
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-gray-400" />
-                    )}
-                    <span className="text-gray-600">
-                      {destination.ingested ? 'Ingested' : 'Pending'}
-                    </span>
+
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{destination.description}</p>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">{tag}</span>
+                    ))}
+                    {tags.length > 3 && <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">+{tags.length - 3}</span>}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span>{titleCase(destination.climate_type)}</span>
+                    <span>{titleCase(destination.destination_type)}</span>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
 
-        {filteredDestinations.length === 0 && (
+        {!isLoading && destinations.length === 0 && (
           <div className="text-center py-12">
             <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
               <Search className="w-12 h-12 text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No destinations found</h3>
-            <p className="text-gray-600">Try adjusting your search or filters</p>
+            <p className="text-gray-600">Try adjusting your search or filters.</p>
           </div>
         )}
       </div>

@@ -64,6 +64,12 @@ def search_destinations(
     return output
 
 
+@router.get("/vector/count",
+            summary="Get count of documents in vector store")
+def vector_count(current_user: User = Depends(get_current_user)):
+    return {"count": vector_store.collection_count()}
+
+
 @router.get("/{destination_id}", response_model=DestinationOut,
             summary="Get a single destination by ID")
 def get_destination(
@@ -87,9 +93,3 @@ def ingest_destinations(
 ):
     count = vector_store.ingest_destinations(db, payload.destination_ids)
     return IngestResponse(ingested=count, message=f"Successfully ingested {count} destinations")
-
-
-@router.get("/vector/count",
-            summary="Get count of documents in vector store")
-def vector_count(current_user: User = Depends(get_current_user)):
-    return {"count": vector_store.collection_count()}

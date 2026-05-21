@@ -1,6 +1,6 @@
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Plane, Map, Heart, Sparkles, Globe, TrendingUp } from 'lucide-react';
+import { Map, Heart, Sparkles, Globe } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function HomePage() {

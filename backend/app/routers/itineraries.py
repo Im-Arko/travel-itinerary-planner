@@ -24,6 +24,20 @@ def generate_itinerary(
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_user),
 ):
+    if db.query(Destination).count() == 0:
+        raise HTTPException(
+            status_code=503,
+            detail="No destinations exist in the database. Seed destination data before generating itineraries.",
+        )
+
+    if vector_store.collection_count() == 0:
+        ingested = vector_store.ingest_destinations(db)
+        if ingested == 0:
+            raise HTTPException(
+                status_code=503,
+                detail="Vector ingestion failed because no destinations were available.",
+            )
+
     # 1. Build query string from preferences
     query_parts = [f"{payload.trip_duration}-day {payload.budget} {payload.destination_type} trip"]
     if payload.preferred_climate != "any":
@@ -49,10 +63,25 @@ def generate_itinerary(
         matches = vector_store.semantic_search(query_text=search_query, n_results=3)
 
     if not matches:
-        raise HTTPException(
-            status_code=503,
-            detail="No destinations available. Please run /api/destinations/ingest first.",
-        )
+        fallback_dest = db.query(Destination).first()
+        if not fallback_dest:
+            raise HTTPException(
+                status_code=503,
+                detail="No destinations available. Please run /api/destinations/ingest first.",
+            )
+        matches = [{
+            "destination_id": fallback_dest.id,
+            "name": fallback_dest.name,
+            "country": fallback_dest.country,
+            "score": 0,
+            "document": (
+                f"Destination: {fallback_dest.name}, {fallback_dest.country}. "
+                f"Type: {fallback_dest.destination_type}. "
+                f"Climate: {fallback_dest.climate_type}. "
+                f"Budget: {fallback_dest.budget_level}. "
+                f"{fallback_dest.description}"
+            ),
+        }]
 
     best_match  = matches[0]
     dest_obj    = db.query(Destination).filter(Destination.id == best_match["destination_id"]).first()

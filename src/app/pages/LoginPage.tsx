@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { errorMessage } from '../utils/formatters';
 import { Mail, Lock, Plane } from 'lucide-react';
 
 export function LoginPage() {
@@ -20,7 +21,7 @@ export function LoginPage() {
       await login(email, password);
       navigate('/destinations');
     } catch (err) {
-      setError('Invalid credentials. Please try again.');
+      setError(errorMessage(err, 'Invalid credentials. Please try again.'));
     } finally {
       setIsLoading(false);
     }

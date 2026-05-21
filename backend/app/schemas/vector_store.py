@@ -84,6 +84,10 @@ def ingest_destinations(db: Session, destination_ids: Optional[List[int]] = None
         return 0
 
     collection = _get_collection()
+    if collection.count() == 0:
+        logger.warning("Semantic search requested with an empty vector collection")
+        return []
+
     embedder   = _get_embedder()
 
     texts = [_build_doc_text(d) for d in destinations]
@@ -159,17 +163,25 @@ def semantic_search(
     if where:
         kwargs["where"] = where
 
-    results = collection.query(**kwargs)
+    try:
+        results = collection.query(**kwargs)
+    except Exception:
+        logger.exception("ChromaDB query failed")
+        return []
 
     output = []
-    for i, meta in enumerate(results["metadatas"][0]):
+    metadatas = results.get("metadatas") or [[]]
+    documents = results.get("documents") or [[]]
+    distances = results.get("distances") or [[]]
+
+    for i, meta in enumerate(metadatas[0]):
         score = 1.0 - results["distances"][0][i]   # cosine → similarity
         output.append({
             "destination_id": int(meta["destination_id"]),
             "name":           meta["name"],
             "country":        meta["country"],
             "score":          round(score, 4),
-            "document":       results["documents"][0][i],
+            "document":       documents[0][i],
         })
 
     return output

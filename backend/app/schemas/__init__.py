@@ -1,2 +1,1 @@
-# database package
-from .schemas import PreferenceCreate, PreferenceOut
+from .schemas import PreferenceOut, PreferenceUpsert

@@ -1,4 +1,4 @@
-import { MapPin, Calendar, DollarSign, Star, Clock, Utensils } from 'lucide-react';
+import { MapPin, DollarSign, Star, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface DayActivity {

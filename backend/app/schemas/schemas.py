@@ -46,18 +46,18 @@ class UserOut(BaseModel):
 
 # ── Preferences ───────────────────────────────────────────────────────────────
 
-class PreferenceCreate(BaseModel):
-    travel_styles: List[str] = Field(default_factory=list)
-    budget_range: str = "mid-range"
-    trip_duration_days: int = 7
-    preferred_climates: List[str] = Field(default_factory=list)
+class PreferenceUpsert(BaseModel):
+    budget: str = "moderate"
+    preferred_climate: str = "any"
+    destination_type: str = "any"
+    trip_duration: int = Field(7, ge=1, le=30)
+    travel_style: str = "solo"
     interests: List[str] = Field(default_factory=list)
-    dietary_restrictions: List[str] = Field(default_factory=list)
-    mobility_considerations: Optional[str] = None
-    preferred_accommodation: str = "hotel"
+    dietary_needs: Optional[str] = None
+    accessibility: bool = False
 
 
-class PreferenceOut(PreferenceCreate):
+class PreferenceOut(PreferenceUpsert):
     id: int
     user_id: int
     created_at: datetime

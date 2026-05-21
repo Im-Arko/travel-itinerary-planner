@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Plane, Map, Heart, Settings, LogOut, User, Menu, X } from 'lucide-react';
+import { Plane, Map, Heart, Settings, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export function RootLayout() {
@@ -83,7 +83,7 @@ export function RootLayout() {
 
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-700">{user?.fullName}</p>
+                    <p className="text-sm font-medium text-gray-700">{user?.full_name || user?.username}</p>
                     <p className="text-xs text-gray-500">@{user?.username}</p>
                   </div>
                   <button
@@ -172,7 +172,7 @@ export function RootLayout() {
                   </Link>
                   <div className="pt-2 border-t border-gray-200">
                     <div className="px-3 py-2 text-sm">
-                      <p className="font-medium text-gray-700">{user?.fullName}</p>
+                      <p className="font-medium text-gray-700">{user?.full_name || user?.username}</p>
                       <p className="text-gray-500">@{user?.username}</p>
                     </div>
                     <button

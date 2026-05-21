@@ -1,235 +1,271 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
-import { mockDestinations } from '../data/mockDestinations';
-import { Sparkles, MapPin, Calendar, Users, DollarSign, Loader } from 'lucide-react';
+import { destinationsApi, itinerariesApi, ItineraryWithDays } from '../services/api';
+import { errorMessage, normalizeBudget, normalizeClimate, normalizeDestinationType } from '../utils/formatters';
+import { Sparkles, MapPin, Calendar, DollarSign, Loader, AlertCircle, Heart, Database, CheckCircle } from 'lucide-react';
 import { Slider } from '@mui/material';
 
+const budgets = ['budget', 'moderate', 'luxury'];
+const climates = ['any', 'tropical', 'temperate', 'arid', 'cold', 'mediterranean'];
+const destinationTypes = ['any', 'beach', 'mountain', 'city', 'countryside', 'adventure', 'cultural'];
+const travelStyles = ['solo', 'couple', 'family', 'adventure', 'cultural', 'relaxation', 'luxury', 'budget'];
+const interestOptions = ['Beach', 'Mountains', 'Cities', 'History', 'Food', 'Art', 'Shopping', 'Nightlife', 'Wildlife', 'Photography', 'Wellness', 'Adventure Sports'];
+
 export function GenerateItineraryPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const { preferences } = usePreferences();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [destination, setDestination] = useState('');
+  const [destinationHint, setDestinationHint] = useState(searchParams.get('destination') || preferences?.destinationHint || '');
   const [duration, setDuration] = useState(preferences?.tripDuration || 7);
-  const [travelers, setTravelers] = useState(2);
-  const [budget, setBudget] = useState(preferences?.budget || '');
+  const [budget, setBudget] = useState(normalizeBudget(preferences?.budget));
+  const [climate, setClimate] = useState(normalizeClimate(preferences?.climate));
+  const [destinationType, setDestinationType] = useState('any');
+  const [travelStyle, setTravelStyle] = useState(preferences?.travelStyle || 'solo');
+  const [interests, setInterests] = useState<string[]>(preferences?.interests || []);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPreview, setGeneratedPreview] = useState<any>(null);
+  const [isValidatingPipeline, setIsValidatingPipeline] = useState(false);
+  const [pipelineStatus, setPipelineStatus] = useState('');
+  const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryWithDays | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
+    if (!loading && !isAuthenticated) navigate('/login');
+  }, [isAuthenticated, loading, navigate]);
+
+  const toggleInterest = (interest: string) => {
+    setInterests(prev => prev.includes(interest) ? prev.filter(item => item !== interest) : [...prev, interest]);
+  };
+
+  const validatePipeline = async () => {
+    setIsValidatingPipeline(true);
+    setError('');
+    try {
+      const current = await destinationsApi.vectorCount();
+      if (current.count > 0) {
+        setPipelineStatus(`Vector store ready with ${current.count} destinations.`);
+        return;
+      }
+
+      const ingestResult = await destinationsApi.ingest();
+      const refreshed = await destinationsApi.vectorCount();
+      setPipelineStatus(`${ingestResult.message}. Vector store now has ${refreshed.count} destinations.`);
+    } catch (err) {
+      setPipelineStatus('');
+      setError(errorMessage(err, 'Unable to validate vector ingestion pipeline.'));
+    } finally {
+      setIsValidatingPipeline(false);
     }
-  }, [isAuthenticated, navigate]);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      validatePipeline();
+    }
+  }, [isAuthenticated]);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
-    setGeneratedPreview(null);
+    setGeneratedItinerary(null);
+    setError('');
 
-    // Simulate AI generation
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    try {
+      const current = await destinationsApi.vectorCount();
+      if (current.count === 0) {
+        await destinationsApi.ingest();
+      }
 
-    const preview = {
-      destination,
-      duration,
-      travelers,
-      budget,
-      summary: `Your personalized ${duration}-day adventure to ${destination} has been crafted! This itinerary combines your preferences for ${preferences?.travelStyle?.toLowerCase() || 'adventure'} travel with handpicked experiences.`,
-      highlights: [
-        'Accommodation recommendations matched to your budget',
-        'Daily activities aligned with your interests',
-        'Estimated costs for transparent budgeting',
-        'Local tips from AI-analyzed traveler reviews'
-      ],
-      estimatedCost: budget === 'Budget ($500-1500)' ? '$1,200' : budget === 'Moderate ($1500-3000)' ? '$2,400' : '$4,800'
-    };
-
-    setGeneratedPreview(preview);
-    setIsGenerating(false);
+      const result = await itinerariesApi.generate({
+        budget: normalizeBudget(budget),
+        preferred_climate: normalizeClimate(climate),
+        destination_type: normalizeDestinationType(destinationType),
+        trip_duration: duration,
+        travel_style: travelStyle,
+        interests,
+        destination_hint: destinationHint || undefined,
+      });
+      setGeneratedItinerary(result);
+    } catch (err) {
+      setError(errorMessage(err, 'Unable to generate itinerary.'));
+    } finally {
+      setIsGenerating(false);
+    }
   };
+
+  if (loading) return null;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-block p-4 bg-purple-100 rounded-full mb-4">
             <Sparkles className="w-10 h-10 text-purple-600" />
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-3">Generate Your Itinerary</h1>
-          <p className="text-lg text-gray-600">
-            AI-powered personalization using your preferences and vector similarity search
-          </p>
+          <p className="text-lg text-gray-600">Create a backend-generated itinerary using vector search and the LLM service.</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Form */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Trip Details</h2>
 
             <form onSubmit={handleGenerate} className="space-y-6">
-              {/* Destination */}
               <div>
                 <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
                   <MapPin className="w-5 h-5 text-blue-600" />
-                  Destination
+                  Destination Hint
                 </label>
-                <select
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
+                <input
+                  value={destinationHint}
+                  onChange={(e) => setDestinationHint(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Select a destination...</option>
-                  {mockDestinations.map(dest => (
-                    <option key={dest.id} value={dest.name}>
-                      {dest.name}, {dest.country}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Paris, tropical beaches, mountain towns..."
+                />
               </div>
 
-              {/* Duration */}
               <div>
                 <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
                   <Calendar className="w-5 h-5 text-blue-600" />
                   Duration: {duration} days
                 </label>
-                <Slider
-                  value={duration}
-                  onChange={(_, value) => setDuration(value as number)}
-                  min={1}
-                  max={30}
-                  sx={{ color: '#2563eb' }}
-                />
-                <div className="flex justify-between text-sm text-gray-500 mt-2">
-                  <span>1 day</span>
-                  <span>30 days</span>
+                <Slider value={duration} onChange={(_, value) => setDuration(value as number)} min={1} max={30} sx={{ color: '#2563eb' }} />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
+                    <DollarSign className="w-5 h-5 text-blue-600" />
+                    Budget
+                  </label>
+                  <select value={budget} onChange={(e) => setBudget(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    {budgets.map(option => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-800 font-semibold mb-3">Climate</label>
+                  <select value={climate} onChange={(e) => setClimate(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {climates.map(option => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-800 font-semibold mb-3">Destination Type</label>
+                  <select value={destinationType} onChange={(e) => setDestinationType(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {destinationTypes.map(option => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-800 font-semibold mb-3">Travel Style</label>
+                  <select value={travelStyle} onChange={(e) => setTravelStyle(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {travelStyles.map(option => <option key={option} value={option}>{option}</option>)}
+                  </select>
                 </div>
               </div>
 
-              {/* Travelers */}
               <div>
                 <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  Travelers: {travelers}
+                  <Heart className="w-5 h-5 text-blue-600" />
+                  Interests
                 </label>
-                <Slider
-                  value={travelers}
-                  onChange={(_, value) => setTravelers(value as number)}
-                  min={1}
-                  max={10}
-                  sx={{ color: '#2563eb' }}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  {interestOptions.map(interest => (
+                    <button
+                      key={interest}
+                      type="button"
+                      onClick={() => toggleInterest(interest)}
+                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${interests.includes(interest) ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >
+                      {interest}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Budget */}
-              <div>
-                <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
-                  <DollarSign className="w-5 h-5 text-blue-600" />
-                  Budget
-                </label>
-                <select
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Select budget...</option>
-                  <option value="Budget ($500-1500)">Budget ($500-1500)</option>
-                  <option value="Moderate ($1500-3000)">Moderate ($1500-3000)</option>
-                  <option value="Luxury ($3000+)">Luxury ($3000+)</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isGenerating}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader className="w-5 h-5 animate-spin" />
-                    Generating with AI...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    Generate Itinerary
-                  </>
-                )}
+              <button type="submit" disabled={isGenerating} className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                {isGenerating ? <><Loader className="w-5 h-5 animate-spin" />Generating...</> : <><Sparkles className="w-5 h-5" />Generate Itinerary</>}
               </button>
             </form>
           </div>
 
-          {/* Preview/Loading */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 font-semibold text-blue-900">
+                  <Database className="h-5 w-5" />
+                  Vector Pipeline
+                </div>
+                <button
+                  type="button"
+                  onClick={validatePipeline}
+                  disabled={isValidatingPipeline}
+                  className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isValidatingPipeline ? 'Checking...' : 'Validate'}
+                </button>
+              </div>
+              {pipelineStatus ? (
+                <p className="flex items-center gap-2 text-sm text-blue-800">
+                  <CheckCircle className="h-4 w-4" />
+                  {pipelineStatus}
+                </p>
+              ) : (
+                <p className="text-sm text-blue-800">Checks vector count and ingests destinations when needed.</p>
+              )}
+            </div>
+
             {isGenerating && (
               <div className="text-center py-12">
                 <div className="inline-block p-4 bg-purple-100 rounded-full mb-4 animate-pulse">
                   <Sparkles className="w-12 h-12 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Creating Your Perfect Trip</h3>
-                <div className="space-y-3 text-gray-600">
-                  <p className="flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></span>
-                    Analyzing your preferences...
-                  </p>
-                  <p className="flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                    Running vector similarity search...
-                  </p>
-                  <p className="flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 bg-pink-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
-                    Generating personalized itinerary...
-                  </p>
-                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Creating Your Trip</h3>
+                <p className="text-gray-600">The backend is searching destinations and generating a day-wise itinerary.</p>
               </div>
             )}
 
-            {!isGenerating && !generatedPreview && (
+            {!isGenerating && error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+                <div className="mb-2 flex items-center gap-2 font-semibold">
+                  <AlertCircle className="h-5 w-5" />
+                  Generation failed
+                </div>
+                <p>{error}</p>
+              </div>
+            )}
+
+            {!isGenerating && !error && !generatedItinerary && (
               <div className="text-center py-12">
                 <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
                   <Sparkles className="w-12 h-12 text-gray-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">Ready to Generate</h3>
-                <p className="text-gray-600">
-                  Fill out the form and click generate to create your personalized itinerary
-                </p>
+                <p className="text-gray-600">Fill out the form to call the backend generator.</p>
               </div>
             )}
 
-            {generatedPreview && !isGenerating && (
+            {generatedItinerary && !isGenerating && (
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-6">
-                  <h3 className="text-2xl font-bold mb-2">Success!</h3>
-                  <p className="text-blue-50">{generatedPreview.summary}</p>
+                  <h3 className="text-2xl font-bold mb-2">{generatedItinerary.title}</h3>
+                  <p className="text-blue-50">{generatedItinerary.summary}</p>
                 </div>
-
-                <div>
-                  <h4 className="font-bold text-gray-800 mb-3">What's Included:</h4>
-                  <ul className="space-y-2">
-                    {generatedPreview.highlights.map((highlight: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2 text-gray-600">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full mt-2"></span>
-                        {highlight}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="rounded-lg bg-gray-50 p-4">
+                    <p className="text-gray-500">Destination</p>
+                    <p className="font-semibold text-gray-800">{generatedItinerary.destination_name}</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-4">
+                    <p className="text-gray-500">Duration</p>
+                    <p className="font-semibold text-gray-800">{generatedItinerary.duration_days} days</p>
+                  </div>
                 </div>
-
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-sm text-green-800 font-medium mb-1">Estimated Total Cost</p>
-                  <p className="text-3xl font-bold text-green-600">{generatedPreview.estimatedCost}</p>
-                </div>
-
-                <button
-                  onClick={() => navigate('/itineraries')}
-                  className="w-full py-3 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition-all"
-                >
+                <button onClick={() => navigate(`/itineraries/${generatedItinerary.id}`)} className="w-full py-3 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition-all">
                   View Full Itinerary
                 </button>
               </div>

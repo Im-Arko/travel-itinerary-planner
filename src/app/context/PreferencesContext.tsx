@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
 
 export interface UserPreferences {
   travelStyle: string;
@@ -16,21 +16,16 @@ interface PreferencesContextType {
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
-const defaultPreferences: UserPreferences = {
-  travelStyle: '',
-  budget: '',
-  tripDuration: 7,
-  climate: '',
-  interests: [],
-  destinationHint: ''
-};
-
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [preferences, setPreferences] = useState<UserPreferences | null>(() => {
+    const stored = sessionStorage.getItem('trip_preferences');
+    return stored ? JSON.parse(stored) as UserPreferences : null;
+  });
 
-  const savePreferences = (prefs: UserPreferences) => {
+  const savePreferences = useCallback((prefs: UserPreferences) => {
+    sessionStorage.setItem('trip_preferences', JSON.stringify(prefs));
     setPreferences(prefs);
-  };
+  }, []);
 
   return (
     <PreferencesContext.Provider value={{ preferences, savePreferences }}>
