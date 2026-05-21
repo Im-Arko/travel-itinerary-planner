@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from typing import Optional, List, Any
 from datetime import datetime
 
@@ -114,6 +114,8 @@ class DayPlan(BaseModel):
     estimated_cost: Optional[float] = None
     tips: Optional[str] = None
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ItineraryGenerateRequest(BaseModel):
     budget: str
@@ -148,6 +150,8 @@ class ItineraryOut(BaseModel):
 
 class ItineraryWithDays(ItineraryOut):
     days: List[DayPlan] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ItineraryUpdate(BaseModel):
