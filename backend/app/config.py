@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     # OpenAI
     openai_api_key: str = ""
 
+    # Mock LLM (for testing without API key)
+    use_mock_llm: bool = True
+
     # ChromaDB
     chroma_persist_dir: str = "./chroma_db"
     chroma_collection_name: str = "destinations"

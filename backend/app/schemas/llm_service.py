@@ -3,13 +3,19 @@ LLM Service
 ──────────────────────────────────────────────────────────────
 Uses OpenAI to generate personalised day-wise travel itineraries
 based on user preferences and matched destinations.
+
+NOTE: This service currently uses a MOCK implementation for testing.
+To use real OpenAI, set USE_MOCK_LLM=false in .env and provide a valid
+OPENAI_API_KEY.
+──────────────────────────────────────────────────────────────
 """
 
 import json
 import logging
+import os
+import random
 from typing import List, Optional
 
-import openai
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -17,6 +23,26 @@ from ..config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+# Check if we should use mock LLM (for testing without API key)
+USE_MOCK_LLM = settings.use_mock_llm
+
+# Only import OpenAI if we're not using mock
+if not USE_MOCK_LLM:
+    from openai import OpenAI
+    # Initialize OpenAI client (new SDK 1.0.0+ interface)
+    client = None
+
+    def _get_openai_client() -> OpenAI:
+        """Get or create the OpenAI client instance."""
+        global client
+        if client is None:
+            if not settings.openai_api_key:
+                raise RuntimeError(
+                    "OPENAI_API_KEY is not set. Set it in .env or the environment and restart the backend."
+                )
+            client = OpenAI(api_key=settings.openai_api_key)
+        return client
 
 
 # ── Output schema for structured LLM response ─────────────────
@@ -70,12 +96,142 @@ Return the itinerary as a valid JSON object matching this schema:
 
 # ── OpenAI helpers ─────────────────────────────────────────────
 
-def _configure_openai() -> None:
-    if not settings.openai_api_key:
-        raise RuntimeError(
-            "OPENAI_API_KEY is not set. Set it in .env or the environment and restart the backend."
-        )
-    openai.api_key = settings.openai_api_key
+def _get_openai_client():
+    """Get or create the OpenAI client instance (only when not using mock)."""
+    global client
+    if client is None:
+        if not settings.openai_api_key:
+            raise RuntimeError(
+                "OPENAI_API_KEY is not set. Set it in .env or the environment and restart the backend."
+            )
+        client = OpenAI(api_key=settings.openai_api_key)
+    return client
+
+
+# ── Mock LLM helpers ───────────────────────────────────────────
+
+def _generate_mock_itinerary(
+    destination: str,
+    duration: int,
+    budget: str,
+    travel_style: str,
+    **kwargs
+) -> dict:
+    """Generate a mock itinerary for testing without OpenAI API."""
+    logger.info(f"[MOCK] Generating itinerary for {destination} ({duration} days, {budget} budget)")
+    
+    # Budget-based cost estimates
+    budget_costs = {
+        "budget": {"accommodation": "Hostel or budget guesthouse", "daily_cost": 75, "meal_tip": "Street food and local eateries"},
+        "moderate": {"accommodation": "3-star hotel or boutique Airbnb", "daily_cost": 200, "meal_tip": "Mix of local and mid-range restaurants"},
+        "luxury": {"accommodation": "5-star hotel or luxury resort", "daily_cost": 500, "meal_tip": "Fine dining and premium experiences"},
+    }
+    
+    budget_info = budget_costs.get(budget, budget_costs["moderate"])
+    
+    # Generate day plans
+    activities = {
+        "morning": [
+            "Start your day with a sunrise walk through the historic old town",
+            "Enjoy a leisurely breakfast at a local café before exploring",
+            "Take an early morning guided tour to beat the crowds",
+            "Begin with a refreshing morning hike or bike ride",
+            "Visit the local market to experience the morning buzz",
+        ],
+        "afternoon": [
+            "Explore the main attractions and museums in the city center",
+            "Take a scenic boat tour or cable car ride",
+            "Discover hidden gems in the local neighborhoods",
+            "Visit iconic landmarks and take memorable photos",
+            "Enjoy a traditional lunch at a highly-rated local restaurant",
+        ],
+        "evening": [
+            "Watch the sunset from a scenic viewpoint",
+            "Dine at a rooftop restaurant with panoramic city views",
+            "Explore the vibrant nightlife in the entertainment district",
+            "Enjoy a cultural show or live music performance",
+            "Take a romantic evening stroll through illuminated streets",
+        ],
+    }
+    
+    themes = [
+        "Discovery and Exploration",
+        "Culture and History",
+        "Nature and Adventure",
+        "Food and Culinary Delights",
+        "Relaxation and Wellness",
+        "Local Life and Traditions",
+        "Art and Architecture",
+        "Scenic Wonders",
+    ]
+    
+    packing_tips_pool = [
+        "Pack comfortable walking shoes - you'll be exploring a lot!",
+        "Bring a universal power adapter for your electronics",
+        "Don't forget sunscreen and a hat for sunny days",
+        "Pack a light jacket for cooler evenings",
+        "Bring a reusable water bottle to stay hydrated",
+        "Pack a small day bag for excursions",
+        "Bring a camera to capture memorable moments",
+        "Pack light, breathable clothing for daytime",
+    ]
+    
+    days = []
+    for day_num in range(1, duration + 1):
+        day_plan = {
+            "day_number": day_num,
+            "theme": random.choice(themes),
+            "morning": random.choice(activities["morning"]),
+            "afternoon": random.choice(activities["afternoon"]),
+            "evening": random.choice(activities["evening"]),
+            "accommodation": budget_info["accommodation"],
+            "estimated_cost": budget_info["daily_cost"] + random.randint(-20, 20),
+            "tips": budget_info["meal_tip"],
+        }
+        days.append(day_plan)
+    
+    # Select random packing tips
+    packing_tips = random.sample(packing_tips_pool, min(5, len(packing_tips_pool)))
+    
+    total_budget = sum(day["estimated_cost"] for day in days)
+    
+    itinerary = {
+        "title": f"{duration} Days in {destination.split(',')[0]}: A {travel_style} Adventure",
+        "destination_name": destination.split(",")[0] if "," in destination else destination,
+        "summary": f"Experience the best of {destination} on this {duration}-day {travel_style} journey. "
+                   f"Perfect for {budget} travelers seeking authentic experiences and memorable moments.",
+        "days": days,
+        "total_budget_est": total_budget,
+        "best_time_to_go": "Spring (March-May) or Fall (September-November) for pleasant weather",
+        "packing_tips": packing_tips,
+    }
+    
+    return itinerary
+
+
+def _generate_mock_destination_summary(dest_context: str, preferences: dict) -> str:
+    """Generate a mock destination summary for testing."""
+    logger.info("[MOCK] Generating destination summary")
+    
+    destination = preferences.get("destination", "this destination")
+    travel_style = preferences.get("travel_style", "relaxed")
+    budget = preferences.get("budget", "moderate")
+    
+    summaries = [
+        f"{destination} is a perfect match for your {travel_style} travel style and {budget} budget. "
+        f"You'll love the authentic experiences and warm hospitality that await you!",
+        
+        f"With your interest in {travel_style} travel, {destination} offers everything you're looking for. "
+        f"The {budget} budget will go far here, allowing you to experience the best local culture.",
+        
+        f"{destination} aligns perfectly with your preferences! "
+        f"Your {travel_style} approach to travel will be rewarded with unforgettable moments in this stunning location.",
+        
+        f"Based on your {travel_style} preferences and {budget} budget, {destination} is an ideal choice. "
+        f"Get ready for an adventure filled with local charm and authentic experiences!",
+    ]
+    
+    return random.choice(summaries)
 
 
 # ── Main generation function ───────────────────────────────────
@@ -96,8 +252,26 @@ def generate_itinerary(
     """
     Call OpenAI to generate a structured itinerary.
     Returns a dict with keys matching ItineraryLLM schema.
+    
+    If USE_MOCK_LLM is True, returns a mock itinerary for testing.
     """
-    _configure_openai()
+    # Use mock LLM if enabled
+    if USE_MOCK_LLM:
+        return _generate_mock_itinerary(
+            destination=destination,
+            duration=duration,
+            budget=budget,
+            travel_style=travel_style,
+            climate=climate,
+            dest_type=dest_type,
+            interests=interests,
+            dietary=dietary,
+            accessibility=accessibility,
+            dest_context=dest_context,
+        )
+    
+    # Real OpenAI API call
+    _get_openai_client()
 
     prompt_text = ITINERARY_PROMPT.format(
         destination     = destination,
@@ -143,7 +317,7 @@ def generate_itinerary(
 
     logger.info("Generating itinerary for %s (%d days, %s budget)", destination, duration, budget)
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
@@ -198,8 +372,17 @@ def generate_itinerary(
 
 
 def generate_destination_summary(dest_context: str, preferences: dict) -> str:
-    """Generate a short 'why this destination suits you' explanation."""
-    _configure_openai()
+    """
+    Generate a short 'why this destination suits you' explanation.
+    
+    If USE_MOCK_LLM is True, returns a mock summary for testing.
+    """
+    # Use mock LLM if enabled
+    if USE_MOCK_LLM:
+        return _generate_mock_destination_summary(dest_context, preferences)
+    
+    # Real OpenAI API call
+    _get_openai_client()
 
     prompt = (
         f"Given this traveller profile: {json.dumps(preferences)}\n"
@@ -207,10 +390,10 @@ def generate_destination_summary(dest_context: str, preferences: dict) -> str:
         "Write 2 sentences explaining why this destination is a great match. Be specific and enthusiastic."
     )
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
         temperature=0.7,
         max_tokens=200,
     )
-    return response.choices[0].message["content"].strip()
+    return response.choices[0].message.content.strip()
