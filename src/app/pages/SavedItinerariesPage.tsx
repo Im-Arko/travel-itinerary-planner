@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Itinerary, itinerariesApi } from '../services/api';
 import { errorMessage } from '../utils/formatters';
-import { Heart, Calendar, MapPin, Star, DollarSign, AlertCircle } from 'lucide-react';
+import { Heart, Calendar, MapPin, Star, DollarSign, AlertCircle, Luggage, Wand2, ArrowRight, Sparkles } from 'lucide-react';
 
 export function SavedItinerariesPage() {
   const { isAuthenticated, loading } = useAuth();
@@ -43,74 +43,177 @@ export function SavedItinerariesPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-neutral-800 mb-3 font-serif">Saved Itineraries</h1>
-          <p className="text-lg text-neutral-600">Your backend-saved travel plans.</p>
+        {/* Header */}
+        <div className="mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-sm font-sans mb-4">
+            <Heart className="w-4 h-4" />
+            Your Collection
+          </div>
+          <h1 className="font-serif text-4xl font-bold text-sand-800 mb-3">Saved Itineraries</h1>
+          <p className="text-sand-500 font-sans text-lg">Your personalized travel plans, saved and organized.</p>
         </div>
 
         {error && (
-          <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            <AlertCircle className="h-5 w-5" />
+          <div className="mb-6 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-red-700 text-sm">
+            <AlertCircle className="h-4 w-4" />
             <span>{error}</span>
           </div>
         )}
 
         {isLoading ? (
-          <p className="text-neutral-600">Loading itineraries...</p>
+          <div className="text-center py-20">
+            <div className="inline-block p-4 bg-sand-100 rounded-full mb-4 animate-pulse">
+              <Calendar className="w-8 h-8 text-sand-400" />
+            </div>
+            <p className="text-sand-500">Loading your itineraries...</p>
+          </div>
         ) : itineraries.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {itineraries.map(itinerary => (
-              <div key={itinerary.id} className="bg-white rounded-xl shadow-warm hover:shadow-warm-lg transition-shadow overflow-hidden border border-neutral-100">
-                <div className="relative bg-gradient-to-r from-primary to-secondary p-5 text-white">
-                  <button onClick={() => toggleFavorite(itinerary)} className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-warm">
-                    <Heart className={`w-5 h-5 ${itinerary.is_favorite ? 'fill-red-500 text-red-500' : 'text-neutral-600'}`} />
-                  </button>
-                  <h3 className="mr-12 text-xl font-bold font-serif">{itinerary.title}</h3>
-                  <p className="mt-2 text-white/90">{itinerary.summary || itinerary.destination_name}</p>
+          <>
+            {/* Stats bar */}
+            <div className="flex flex-wrap gap-4 mb-8">
+              <div className="bg-white rounded-xl px-5 py-3 shadow-warm border border-sand-100 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-primary-500" />
                 </div>
-
-                <div className="p-5">
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-neutral-600 text-sm">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      {itinerary.destination_name}
-                    </div>
-                    <div className="flex items-center gap-2 text-neutral-600 text-sm">
-                      <Calendar className="w-4 h-4 text-primary" />
-                      {itinerary.duration_days} days, created {new Date(itinerary.generated_at).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-2 text-neutral-600 text-sm">
-                      <DollarSign className="w-4 h-4 text-primary" />
-                      {itinerary.budget}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, idx) => (
-                        <Star key={idx} className={`w-4 h-4 ${idx < (itinerary.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-300'}`} />
-                      ))}
-                    </div>
-                    <span className="text-xs text-neutral-500 capitalize">{itinerary.status}</span>
-                  </div>
-
-                  <Link to={`/itineraries/${itinerary.id}`} className="block w-full py-2 bg-primary text-white text-center rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                    View Details
-                  </Link>
+                <div>
+                  <p className="text-xs text-sand-400">Total Trips</p>
+                  <p className="font-bold text-sand-800">{itineraries.length}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <div className="inline-block p-4 bg-neutral-100 rounded-full mb-4">
-              <Heart className="w-12 h-12 text-neutral-400" />
+              <div className="bg-white rounded-xl px-5 py-3 shadow-warm border border-sand-100 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-secondary-50 flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-secondary-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-sand-400">Favorites</p>
+                  <p className="font-bold text-sand-800">{itineraries.filter(i => i.is_favorite).length}</p>
+                </div>
+              </div>
             </div>
-            <h3 className="text-2xl font-semibold text-neutral-800 mb-2 font-serif">No saved itineraries yet</h3>
-            <p className="text-neutral-600 mb-6">Generate your first itinerary to get started.</p>
-            <Link to="/generate" className="inline-block px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-semibold hover:from-primary/90 hover:to-secondary/90 transition-all shadow-warm-lg ring-1 ring-white/20 ring-inset">
-              Generate Itinerary
+
+            {/* Itinerary Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {itineraries.map(itinerary => (
+                <Link
+                  key={itinerary.id}
+                  to={`/itineraries/${itinerary.id}`}
+                  className="group bg-white rounded-2xl shadow-warm hover:shadow-warm-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-sand-100"
+                >
+                  {/* Header with gradient */}
+                  <div className="relative bg-gradient-to-r from-primary-500 to-secondary-500 p-5 text-white">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleFavorite(itinerary);
+                      }}
+                      className="absolute top-3 right-3 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                    >
+                      <Heart className={`w-4 h-4 ${itinerary.is_favorite ? 'fill-white text-white' : 'text-white/70'}`} />
+                    </button>
+                    <h3 className="font-serif text-xl font-bold pr-10">{itinerary.title}</h3>
+                    <p className="text-white/85 text-sm mt-1 line-clamp-1">{itinerary.summary || itinerary.destination_name}</p>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-5">
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center gap-2 text-sand-500 text-sm">
+                        <MapPin className="w-4 h-4 text-primary-500" />
+                        <span className="font-medium text-sand-700">{itinerary.destination_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sand-500 text-sm">
+                        <Calendar className="w-4 h-4 text-primary-500" />
+                        <span>{itinerary.duration_days} days</span>
+                        <span className="text-sand-300">•</span>
+                        <span>{new Date(itinerary.generated_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sand-500 text-sm">
+                        <DollarSign className="w-4 h-4 text-primary-500" />
+                        <span className="capitalize">{itinerary.budget}</span>
+                      </div>
+                    </div>
+
+                    {/* Rating & Status */}
+                    <div className="flex items-center justify-between mb-4 pt-3 border-t border-sand-100">
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-4 h-4 ${
+                              star <= (itinerary.rating || 0)
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-sand-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-sand-100 text-sand-600 capitalize">
+                        {itinerary.status}
+                      </span>
+                    </div>
+
+                    {/* View button */}
+                    <div className="flex items-center text-primary-500 text-sm font-medium group-hover:gap-2 gap-1 transition-all">
+                      View Details <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-20 px-6">
+            {/* Illustrated empty state with suitcase */}
+            <div className="relative inline-block mb-8">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center mx-auto">
+                <div className="relative">
+                  <Luggage className="w-16 h-16 text-primary-400" />
+                  {/* Decorative sparkles */}
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary-200 flex items-center justify-center">
+                    <Star className="w-3 h-3 text-primary-500 fill-primary-500" />
+                  </div>
+                  <div className="absolute -bottom-1 -left-3 w-4 h-4 rounded-full bg-secondary-200" />
+                </div>
+              </div>
+              {/* Dotted path decoration */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-sand-200" />
+                <div className="w-2 h-2 rounded-full bg-sand-300" />
+                <div className="w-2 h-2 rounded-full bg-sand-200" />
+                <div className="w-2 h-2 rounded-full bg-sand-300" />
+                <div className="w-2 h-2 rounded-full bg-sand-200" />
+              </div>
+            </div>
+
+            <h3 className="font-serif text-2xl font-semibold text-sand-800 mb-3">Your next adventure awaits</h3>
+            <p className="text-sand-500 font-sans text-base mb-8 max-w-md mx-auto leading-relaxed">
+              Your saved itineraries will appear here. Generate your first personalized trip and start collecting memories.
+            </p>
+
+            <Link
+              to="/generate"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-2xl font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all shadow-warm-lg ring-1 ring-white/20 ring-inset group"
+            >
+              <Wand2 className="w-5 h-5" />
+              Generate Your First Itinerary
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
+
+            {/* Feature highlights */}
+            <div className="mt-10 flex flex-wrap justify-center gap-4 text-sm text-sand-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-400" />
+                AI-powered recommendations
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-secondary-400" />
+                Vector similarity search
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                Personalized for you
+              </span>
+            </div>
           </div>
         )}
       </div>

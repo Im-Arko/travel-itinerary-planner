@@ -5,7 +5,23 @@ import { usePreferences, UserPreferences } from '../context/PreferencesContext';
 import { preferencesApi } from '../services/api';
 import { errorMessage, normalizeBudget, normalizeClimate } from '../utils/formatters';
 import { Slider } from '@mui/material';
-import { Settings, Heart, DollarSign, Calendar, Thermometer, MapPin, Save, AlertCircle } from 'lucide-react';
+import { Settings, Heart, DollarSign, Calendar, Thermometer, MapPin, Save, AlertCircle, Sparkles, CheckCircle, Wand2, Users, Globe } from 'lucide-react';
+
+// Emoji mapping for interests
+const interestEmojis: Record<string, string> = {
+  Beach: '🏖️',
+  Mountains: '🏔️',
+  Cities: '🏙️',
+  History: '🏛️',
+  Food: '🍜',
+  Art: '🎨',
+  Shopping: '🛍️',
+  Nightlife: '🌙',
+  Wildlife: '🦁',
+  Photography: '📸',
+  Wellness: '🧘',
+  'Adventure Sports': '🥾',
+};
 
 const travelStyles = ['solo', 'couple', 'family', 'adventure', 'cultural', 'relaxation', 'luxury', 'budget'];
 const budgetRanges = ['budget', 'moderate', 'luxury'];
@@ -110,57 +126,64 @@ export function PreferencesPage() {
     <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-block p-4 bg-primary/10 rounded-full mb-4">
-            <Settings className="w-10 h-10 text-primary" />
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-sm font-sans mb-4">
+            <Sparkles className="w-4 h-4" />
+            Personalization
           </div>
-          <h1 className="text-4xl font-bold text-neutral-800 mb-3 font-serif">Travel Preferences</h1>
-          <p className="text-lg text-neutral-600">
-            Tell us about your travel style to get personalized recommendations
+          <h1 className="font-serif text-4xl font-bold text-sand-800 mb-3">Travel Preferences</h1>
+          <p className="text-sand-500 font-sans text-lg max-w-xl mx-auto">
+            Tell us about your travel style to get personalized AI recommendations
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-warm-lg p-8 space-y-8 border border-neutral-100">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-warm-lg p-8 space-y-8 border border-sand-100">
+          {/* Success message */}
           {saveSuccess && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-              <Save className="w-5 h-5" />
-              <span>Preferences saved to your account.</span>
+            <div className="flex items-center gap-3 bg-forest-50 border border-forest-200 text-forest-700 px-4 py-3 rounded-xl">
+              <div className="w-8 h-8 rounded-full bg-forest-100 flex items-center justify-center">
+                <CheckCircle className="w-4 h-4" />
+              </div>
+              <span className="font-medium">Preferences saved successfully!</span>
             </div>
           )}
 
+          {/* Error message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+            <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
               <AlertCircle className="w-5 h-5" />
               <span>{error}</span>
             </div>
           )}
 
+          {/* Loading state */}
           {isLoadingPrefs && (
-            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
-              Loading saved backend preferences...
+            <div className="flex items-center gap-3 bg-sand-50 border border-sand-200 text-sand-600 px-4 py-3 rounded-xl">
+              <div className="w-5 h-5 rounded-full border-2 border-primary-400 border-t-transparent animate-spin" />
+              <span>Loading your saved preferences...</span>
             </div>
           )}
 
           {/* Travel Style */}
           <div>
-            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
-              <Heart className="w-5 h-5 text-primary" />
+            <label className="flex items-center gap-2 text-sand-700 font-semibold mb-4">
+              <Users className="w-5 h-5 text-primary-500" />
               Travel Style
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="flex flex-wrap gap-2">
               {travelStyles.map(style => (
                 <button
                   key={style}
                   type="button"
                   onClick={() => setFormData({ ...formData, travelStyle: style })}
-                  className={`px-4 py-3 rounded-lg font-medium transition-all ${
+                  className={`px-5 py-2.5 rounded-full font-medium transition-all duration-200 ${
                     formData.travelStyle === style
-                      ? 'bg-primary text-white shadow-warm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'bg-sand-100 text-sand-600 hover:bg-primary-50 hover:text-primary-600'
                   }`}
                 >
-                  {style}
+                  {style.charAt(0).toUpperCase() + style.slice(1)}
                 </button>
               ))}
             </div>
@@ -168,8 +191,8 @@ export function PreferencesPage() {
 
           {/* Budget */}
           <div>
-            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
-              <DollarSign className="w-5 h-5 text-primary" />
+            <label className="flex items-center gap-2 text-sand-700 font-semibold mb-4">
+              <DollarSign className="w-5 h-5 text-primary-500" />
               Budget Range
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -178,13 +201,13 @@ export function PreferencesPage() {
                   key={range}
                   type="button"
                   onClick={() => setFormData({ ...formData, budget: range })}
-                  className={`px-4 py-3 rounded-lg font-medium transition-all ${
+                  className={`px-5 py-4 rounded-xl font-medium transition-all duration-200 ${
                     formData.budget === range
-                      ? 'bg-primary text-white shadow-warm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'bg-sand-100 text-sand-600 hover:bg-primary-50 hover:text-primary-600'
                   }`}
                 >
-                  {range}
+                  <span className="block text-lg">{range.charAt(0).toUpperCase() + range.slice(1)}</span>
                 </button>
               ))}
             </div>
@@ -192,9 +215,9 @@ export function PreferencesPage() {
 
           {/* Trip Duration */}
           <div>
-            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
-              <Calendar className="w-5 h-5 text-primary" />
-              Trip Duration: {formData.tripDuration} days
+            <label className="flex items-center gap-2 text-sand-700 font-semibold mb-4">
+              <Calendar className="w-5 h-5 text-primary-500" />
+              Trip Duration: <span className="text-primary-600">{formData.tripDuration} days</span>
             </label>
             <Slider
               value={formData.tripDuration}
@@ -203,7 +226,7 @@ export function PreferencesPage() {
               max={30}
               sx={{ color: '#c84b31' }}
             />
-            <div className="flex justify-between text-sm text-neutral-500 mt-2">
+            <div className="flex justify-between text-xs text-sand-400 mt-2">
               <span>1 day</span>
               <span>30 days</span>
             </div>
@@ -211,46 +234,48 @@ export function PreferencesPage() {
 
           {/* Climate Preference */}
           <div>
-            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
-              <Thermometer className="w-5 h-5 text-primary" />
+            <label className="flex items-center gap-2 text-sand-700 font-semibold mb-4">
+              <Globe className="w-5 h-5 text-primary-500" />
               Preferred Climate
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="flex flex-wrap gap-2">
               {climates.map(climate => (
                 <button
                   key={climate}
                   type="button"
                   onClick={() => setFormData({ ...formData, climate })}
-                  className={`px-4 py-3 rounded-lg font-medium transition-all ${
+                  className={`px-5 py-2.5 rounded-full font-medium transition-all duration-200 ${
                     formData.climate === climate
-                      ? 'bg-primary text-white shadow-warm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'bg-sand-100 text-sand-600 hover:bg-primary-50 hover:text-primary-600'
                   }`}
                 >
-                  {climate}
+                  {climate.charAt(0).toUpperCase() + climate.slice(1)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Interests */}
+          {/* Interests - Visual pill chips with emojis */}
           <div>
-            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
-              <Heart className="w-5 h-5 text-primary" />
-              Interests (Select all that apply)
+            <label className="flex items-center gap-2 text-sand-700 font-semibold mb-4">
+              <Heart className="w-5 h-5 text-primary-500" />
+              Your Interests
+              <span className="text-sand-400 font-normal text-sm ml-2">(Select all that apply)</span>
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="flex flex-wrap gap-2">
               {interestOptions.map(interest => (
                 <button
                   key={interest}
                   type="button"
                   onClick={() => toggleInterest(interest)}
-                  className={`px-4 py-3 rounded-lg font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-200 ${
                     formData.interests.includes(interest)
-                      ? 'bg-secondary text-white shadow-warm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                      ? 'bg-secondary-500 text-white shadow-md'
+                      : 'bg-sand-100 text-sand-600 hover:bg-secondary-50 hover:text-secondary-600'
                   }`}
                 >
+                  <span className="text-base">{interestEmojis[interest] || ''}</span>
                   {interest}
                 </button>
               ))}
@@ -259,14 +284,15 @@ export function PreferencesPage() {
 
           {/* Destination Hint */}
           <div>
-            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
-              <MapPin className="w-5 h-5 text-primary" />
-              Destination Ideas (Optional)
+            <label className="flex items-center gap-2 text-sand-700 font-semibold mb-4">
+              <MapPin className="w-5 h-5 text-primary-500" />
+              Destination Ideas
+              <span className="text-sand-400 font-normal text-sm ml-2">(Optional)</span>
             </label>
             <textarea
               value={formData.destinationHint}
               onChange={(e) => setFormData({ ...formData, destinationHint: e.target.value })}
-              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+              className="input py-3 resize-none"
               rows={3}
               placeholder="e.g., 'I love tropical beaches in Southeast Asia' or 'Looking for mountain adventures in Europe'"
             />
@@ -276,10 +302,11 @@ export function PreferencesPage() {
           <button
             type="submit"
             disabled={!formData.travelStyle || !formData.budget || !formData.climate}
-            className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-semibold hover:from-primary/90 hover:to-secondary/90 transition-all shadow-warm-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ring-1 ring-white/20 ring-inset"
+            className="w-full py-4 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all shadow-warm-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ring-1 ring-white/20 ring-inset group"
           >
             <Save className="w-5 h-5" />
-            Save For Generation
+            Save Preferences
+            <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
           </button>
         </form>
       </div>
