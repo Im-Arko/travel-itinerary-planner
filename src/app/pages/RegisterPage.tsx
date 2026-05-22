@@ -2,15 +2,19 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { errorMessage } from '../utils/formatters';
-import { Mail, Lock, User, UserCircle, Plane } from 'lucide-react';
+import { Mail, Lock, User, UserCircle, Plane, Eye, EyeOff } from 'lucide-react';
+
+const BG =
+  'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1400&q=80&auto=format&fit=crop';
 
 export function RegisterPage() {
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [fullName, setFullName]   = useState('');
+  const [username, setUsername]   = useState('');
+  const [email, setEmail]         = useState('');
+  const [password, setPassword]   = useState('');
+  const [showPw, setShowPw]       = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]         = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -18,7 +22,6 @@ export function RegisterPage() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     try {
       await register(email, username, password, fullName);
       navigate('/preferences');
@@ -30,114 +33,142 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-warm-lg p-8 border border-neutral-100">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
-              <Plane className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold text-neutral-800 mb-2 font-serif">Create Account</h1>
-            <p className="text-neutral-600">Start planning your perfect journey</p>
-          </div>
+    <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
+      {/* ── Left: photo ── */}
+      <div className="hidden lg:block relative overflow-hidden">
+        <img
+          src={BG}
+          alt="Travel"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-black/55" />
+        <div className="absolute top-12 left-12 right-12 text-white">
+          <p className="font-serif text-3xl font-semibold italic leading-snug">
+            "Not all those who wander are lost."
+          </p>
+          <p className="font-sans text-sm text-white/55 mt-4">— J.R.R. Tolkien</p>
+        </div>
+        <div className="absolute bottom-10 left-12 flex items-center gap-2">
+          <Plane className="w-5 h-5 text-white/70" />
+          <span className="font-serif text-white/70 italic text-lg">TravelAI</span>
+        </div>
+      </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+      {/* ── Right: form ── */}
+      <div className="flex flex-col items-center justify-center px-8 py-16 bg-sand-50">
+        <Link to="/" className="flex items-center gap-2 mb-12 group">
+          <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center shadow-warm">
+            <Plane className="w-4 h-4 text-white" strokeWidth={2.5} />
+          </div>
+          <span className="font-serif text-2xl font-bold text-sand-800 italic">
+            Travel<span className="text-primary-500 not-italic">AI</span>
+          </span>
+        </Link>
+
+        <div className="w-full max-w-sm">
+          <h1 className="font-serif text-4xl font-bold text-sand-800 mb-2">Start exploring</h1>
+          <p className="text-sand-400 font-sans text-sm mb-10">
+            Create your account and plan your first AI-powered adventure.
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
                 {error}
-              </div>
+              </p>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Full Name
-              </label>
+              <label className="label" htmlFor="fullName">Full name</label>
               <div className="relative">
-                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                <UserCircle className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-300 pointer-events-none" />
                 <input
+                  id="fullName"
                   type="text"
+                  required
+                  placeholder="Arko Banerjee"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  placeholder="John Doe"
-                  required
+                  onChange={e => setFullName(e.target.value)}
+                  className="input pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Username
-              </label>
+              <label className="label" htmlFor="username">Username</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-300 pointer-events-none" />
                 <input
+                  id="username"
                   type="text"
+                  required
+                  placeholder="arkob"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  placeholder="johndoe"
-                  required
+                  onChange={e => setUsername(e.target.value)}
+                  className="input pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Email Address
-              </label>
+              <label className="label" htmlFor="email">Email address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-300 pointer-events-none" />
                 <input
+                  id="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  placeholder="you@example.com"
                   required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="input pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Password
-              </label>
+              <label className="label" htmlFor="password">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-300 pointer-events-none" />
                 <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  placeholder="••••••••"
+                  id="password"
+                  type={showPw ? 'text' : 'password'}
                   required
+                  autoComplete="new-password"
+                  placeholder="Min. 8 characters"
                   minLength={8}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="input pl-10 pr-10"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(v => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sand-300 hover:text-sand-500 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-              <p className="mt-1 text-xs text-neutral-500">Must be at least 8 characters</p>
+              <p className="text-xs text-sand-400 mt-1 font-sans">Must be at least 8 characters</p>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-semibold hover:from-primary/90 hover:to-secondary/90 transition-all shadow-warm-lg disabled:opacity-50 disabled:cursor-not-allowed ring-1 ring-white/20 ring-inset"
+              className="btn-primary w-full py-3.5 text-base rounded-xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating account...' : 'Create Account'}
+              {isLoading ? 'Creating account…' : 'Create account'}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-neutral-600">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary hover:text-primary/80 font-semibold">
-                Login
-              </Link>
-            </p>
-          </div>
+          <p className="text-center text-sm text-sand-400 mt-8">
+            Already have an account?{' '}
+            <Link to="/login" className="text-primary-500 font-medium hover:text-primary-600 transition-colors">
+              Sign in
+            </Link>
+          </p>
         </div>
       </div>
     </div>

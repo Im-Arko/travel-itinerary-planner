@@ -111,17 +111,17 @@ export function PreferencesPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-block p-4 bg-blue-100 rounded-full mb-4">
-            <Settings className="w-10 h-10 text-blue-600" />
+          <div className="inline-block p-4 bg-primary/10 rounded-full mb-4">
+            <Settings className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-3">Travel Preferences</h1>
-          <p className="text-lg text-gray-600">
+          <h1 className="text-4xl font-bold text-neutral-800 mb-3 font-serif">Travel Preferences</h1>
+          <p className="text-lg text-neutral-600">
             Tell us about your travel style to get personalized recommendations
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-warm-lg p-8 space-y-8 border border-neutral-100">
           {saveSuccess && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
               <Save className="w-5 h-5" />
@@ -144,8 +144,8 @@ export function PreferencesPage() {
 
           {/* Travel Style */}
           <div>
-            <label className="flex items-center gap-2 text-gray-800 font-semibold mb-4">
-              <Heart className="w-5 h-5 text-blue-600" />
+            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
+              <Heart className="w-5 h-5 text-primary" />
               Travel Style
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -156,8 +156,8 @@ export function PreferencesPage() {
                   onClick={() => setFormData({ ...formData, travelStyle: style })}
                   className={`px-4 py-3 rounded-lg font-medium transition-all ${
                     formData.travelStyle === style
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-primary text-white shadow-warm'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
                   {style}
@@ -168,8 +168,8 @@ export function PreferencesPage() {
 
           {/* Budget */}
           <div>
-            <label className="flex items-center gap-2 text-gray-800 font-semibold mb-4">
-              <DollarSign className="w-5 h-5 text-blue-600" />
+            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
+              <DollarSign className="w-5 h-5 text-primary" />
               Budget Range
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -180,8 +180,8 @@ export function PreferencesPage() {
                   onClick={() => setFormData({ ...formData, budget: range })}
                   className={`px-4 py-3 rounded-lg font-medium transition-all ${
                     formData.budget === range
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-primary text-white shadow-warm'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
                   {range}
@@ -192,8 +192,8 @@ export function PreferencesPage() {
 
           {/* Trip Duration */}
           <div>
-            <label className="flex items-center gap-2 text-gray-800 font-semibold mb-4">
-              <Calendar className="w-5 h-5 text-blue-600" />
+            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
+              <Calendar className="w-5 h-5 text-primary" />
               Trip Duration: {formData.tripDuration} days
             </label>
             <Slider
@@ -201,9 +201,9 @@ export function PreferencesPage() {
               onChange={(_, value) => setFormData({ ...formData, tripDuration: value as number })}
               min={1}
               max={30}
-              sx={{ color: '#2563eb' }}
+              sx={{ color: '#c84b31' }}
             />
-            <div className="flex justify-between text-sm text-gray-500 mt-2">
+            <div className="flex justify-between text-sm text-neutral-500 mt-2">
               <span>1 day</span>
               <span>30 days</span>
             </div>
@@ -211,8 +211,8 @@ export function PreferencesPage() {
 
           {/* Climate Preference */}
           <div>
-            <label className="flex items-center gap-2 text-gray-800 font-semibold mb-4">
-              <Thermometer className="w-5 h-5 text-blue-600" />
+            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
+              <Thermometer className="w-5 h-5 text-primary" />
               Preferred Climate
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -223,8 +223,8 @@ export function PreferencesPage() {
                   onClick={() => setFormData({ ...formData, climate })}
                   className={`px-4 py-3 rounded-lg font-medium transition-all ${
                     formData.climate === climate
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-primary text-white shadow-warm'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
                   {climate}
@@ -235,8 +235,8 @@ export function PreferencesPage() {
 
           {/* Interests */}
           <div>
-            <label className="flex items-center gap-2 text-gray-800 font-semibold mb-4">
-              <Heart className="w-5 h-5 text-blue-600" />
+            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
+              <Heart className="w-5 h-5 text-primary" />
               Interests (Select all that apply)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -247,8 +247,8 @@ export function PreferencesPage() {
                   onClick={() => toggleInterest(interest)}
                   className={`px-4 py-3 rounded-lg font-medium transition-all ${
                     formData.interests.includes(interest)
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-secondary text-white shadow-warm'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
                   {interest}
@@ -259,14 +259,14 @@ export function PreferencesPage() {
 
           {/* Destination Hint */}
           <div>
-            <label className="flex items-center gap-2 text-gray-800 font-semibold mb-4">
-              <MapPin className="w-5 h-5 text-blue-600" />
+            <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-4">
+              <MapPin className="w-5 h-5 text-primary" />
               Destination Ideas (Optional)
             </label>
             <textarea
               value={formData.destinationHint}
               onChange={(e) => setFormData({ ...formData, destinationHint: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none"
               rows={3}
               placeholder="e.g., 'I love tropical beaches in Southeast Asia' or 'Looking for mountain adventures in Europe'"
             />
@@ -276,7 +276,7 @@ export function PreferencesPage() {
           <button
             type="submit"
             disabled={!formData.travelStyle || !formData.budget || !formData.climate}
-            className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-semibold hover:from-primary/90 hover:to-secondary/90 transition-all shadow-warm-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ring-1 ring-white/20 ring-inset"
           >
             <Save className="w-5 h-5" />
             Save For Generation

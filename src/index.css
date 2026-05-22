@@ -1,269 +1,83 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
 
-@theme {
-  /* Primary palette - warm terracotta (from your portfolio) */
-  --color-primary-50: #fdf2f0;
-  --color-primary-100: #fae8e4;
-  --color-primary-200: #f5d1c9;
-  --color-primary-300: #eeb5a5;
-  --color-primary-400: #e68f77;
-  --color-primary-500: #dd6a4e;
-  --color-primary-600: #c84b31;
-  --color-primary-700: #a83a27;
-  --color-primary-800: #8a3022;
-  --color-primary-900: #6e281c;
-  --color-primary-950: #3f150e;
-  
-  /* Secondary palette - forest green (from your portfolio) */
-  --color-secondary-50: #eef5f1;
-  --color-secondary-100: #dce8e2;
-  --color-secondary-200: #bcd1c5;
-  --color-secondary-300: #94b5a3;
-  --color-secondary-400: #6a9780;
-  --color-secondary-500: #4a7d63;
-  --color-secondary-600: #36634d;
-  --color-secondary-700: #2d6a4f;
-  --color-secondary-800: #255440;
-  --color-secondary-900: #1e4434;
-  --color-secondary-950: #0e231b;
-  
-  /* Sky/Ocean palette - travel blues */
-  --color-sky-50: #e8f4f8;
-  --color-sky-100: #cde7f0;
-  --color-sky-200: #9fd2e3;
-  --color-sky-300: #69b5d1;
-  --color-sky-400: #3a95b9;
-  --color-sky-500: #20799e;
-  --color-sky-600: #146082;
-  --color-sky-700: #124d6a;
-  --color-sky-800: #123f57;
-  --color-sky-900: #113448;
-  --color-sky-950: #091e2b;
-  
-  /* Neutral palette - warm paper tones (from your portfolio) */
-  --color-neutral-50: #faf9f6;
-  --color-neutral-100: #f2efe8;
-  --color-neutral-200: #e5e0d5;
-  --color-neutral-300: #cec8b9;
-  --color-neutral-400: #b0a998;
-  --color-neutral-500: #948d7d;
-  --color-neutral-600: #7a7466;
-  --color-neutral-700: #635d51;
-  --color-neutral-800: #504b42;
-  --color-neutral-900: #423d36;
-  --color-neutral-950: #0f0f0f;
-  
-  /* Surface colors */
-  --color-surface-light: #faf9f6;
-  --color-surface: #f2efe8;
-  --color-surface-dark: #e5e0d5;
-  
-  /* Muted text */
-  --color-muted-light: #948d7d;
-  --color-muted: #7a7466;
-  --color-muted-dark: #635d51;
-  
-  /* Custom fonts */
-  --font-sans: 'Geist', system-ui, sans-serif;
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-mono: 'Geist Mono', monospace;
-  
-  /* Custom shadows */
-  --shadow-warm: 0 4px 6px -1px rgba(15, 15, 15, 0.05), 0 10px 15px -3px rgba(15, 15, 15, 0.05);
-  --shadow-warm-lg: 0 10px 15px -3px rgba(15, 15, 15, 0.08), 0 20px 25px -5px rgba(15, 15, 15, 0.05);
-  --shadow-warm-xl: 0 20px 25px -5px rgba(15, 15, 15, 0.1), 0 40px 40px -10px rgba(15, 15, 15, 0.08);
-  
-  /* Custom border radius */
-  --radius-warm: 0.375rem;
-  --radius-warm-lg: 0.5rem;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  /* Primary colors from portfolio - warm terracotta */
-  --color-primary: #c84b31;
-  --color-primary-light: #dd6a4e;
-  --color-primary-dark: #a83a27;
-  
-  /* Secondary colors - forest green */
-  --color-secondary: #2d6a4f;
-  --color-secondary-light: #4a7d63;
-  --color-secondary-dark: #255440;
-  
-  /* Sky/Ocean - travel blues */
-  --color-sky: #20799e;
-  --color-sky-light: #3a95b9;
-  --color-sky-dark: #146082;
-  
-  /* Neutral palette - warm paper tones */
-  --color-background: #faf9f6;
-  --color-surface: #f2efe8;
-  --color-border: #e5e0d5;
-  --color-text: #0f0f0f;
-  --color-text-secondary: #635d51;
-  --color-text-muted: #7a7466;
-  
-  /* Fonts from portfolio */
-  --font-sans: 'Geist', system-ui, sans-serif;
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-mono: 'Geist Mono', monospace;
-  
-  /* Shadows */
-  --shadow-warm: 0 4px 6px -1px rgba(15, 15, 15, 0.05), 0 10px 15px -3px rgba(15, 15, 15, 0.05);
-  --shadow-warm-lg: 0 10px 15px -3px rgba(15, 15, 15, 0.08), 0 20px 25px -5px rgba(15, 15, 15, 0.05);
-  
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  color: var(--color-text);
-  background: var(--color-background);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Dark mode - inspired by your second portfolio */
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    /* Dark backgrounds */
-    --color-background: #0b0c0e;
-    --color-surface: #111215;
-    --color-border: rgba(255, 255, 255, 0.07);
-    
-    /* Light text for dark mode */
-    --color-text: #e8e6e0;
-    --color-text-secondary: #b0aea8;
-    --color-text-muted: #6b6d72;
-    
-    /* Adjust primary for dark mode - slightly lighter */
-    --color-primary: #d4a853; /* Warm gold from portfolio 2 */
-    --color-primary-light: #e0b862;
-    --color-primary-dark: #c8964a;
-    
-    /* Secondary stays similar */
-    --color-secondary: #4a9eed; /* Cool blue from portfolio 2 */
-    --color-secondary-light: #5aaaf5;
-    --color-secondary-dark: #3a8ed5;
-    
-    /* Sky adjusts for dark mode */
-    --color-sky: #3a95b9;
-    --color-sky-light: #4aa5c9;
-    --color-sky-dark: #2a85a9;
-    
-    --shadow-warm: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-    --shadow-warm-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    --bg:        #faf9f6;
+    --surface:   #f2efe8;
+    --border:    #e5e0d5;
+    --text:      #3d3830;
+    --muted:     #7d6e54;
+    --primary:   #c84b31;
+    --primary-dark: #a83928;
   }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-sand-50 text-sand-800 font-sans;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-sand-50;
+  }
+
+  ::selection {
+    background: #f5bfb0;
+    color: #3d3830;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f2efe8; }
+  ::-webkit-scrollbar-thumb { background: #d4c9b8; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #b8a98e; }
 }
 
-/* Base styles */
-body {
-  margin: 0;
-  min-height: 100vh;
-}
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-500 text-white font-sans font-medium rounded-xl shadow-warm transition-all duration-200 hover:bg-primary-600 active:scale-[0.98] ring-1 ring-white/10 ring-inset;
+  }
 
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent text-white font-sans font-medium rounded-xl border border-white/50 transition-all duration-200 hover:bg-white/10 active:scale-[0.98];
+  }
 
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--color-text);
-}
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent text-primary-500 font-sans font-medium rounded-xl border border-primary-300 transition-all duration-200 hover:bg-primary-50 active:scale-[0.98];
+  }
 
-h1 {
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
-  margin-bottom: 1.5rem;
-}
+  .card {
+    @apply bg-white rounded-2xl shadow-warm border border-sand-100 overflow-hidden;
+  }
 
-h2 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  margin-bottom: 1rem;
-}
+  .input {
+    @apply w-full px-4 py-3 bg-white border border-sand-200 rounded-xl text-sand-800 placeholder:text-sand-400 font-sans text-sm transition-all duration-150 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100;
+  }
 
-h3 {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  margin-bottom: 0.75rem;
-}
+  .label {
+    @apply block text-sm font-medium text-sand-700 mb-1.5;
+  }
 
-p {
-  margin: 0;
-  color: var(--color-text-secondary);
-}
+  .tag {
+    @apply inline-flex items-center gap-1 px-3 py-1 bg-primary-50 text-primary-700 text-xs font-medium rounded-full border border-primary-100;
+  }
 
-/* Links */
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
+  .section-title {
+    @apply font-serif text-3xl font-bold text-sand-800 tracking-tight;
+  }
 
-a:hover {
-  color: var(--color-primary-light);
-}
-
-/* Focus states for accessibility */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* Selection */
-::selection {
-  background: var(--color-primary);
-  color: white;
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-surface);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
-}
-
-/* Utility classes for contrast */
-.text-high-contrast {
-  color: var(--color-text);
-}
-
-.text-medium-contrast {
-  color: var(--color-text-secondary);
-}
-
-.text-low-contrast {
-  color: var(--color-text-muted);
-}
-
-/* Background utilities */
-.bg-primary {
-  background-color: var(--color-primary);
-}
-
-.bg-secondary {
-  background-color: var(--color-secondary);
-}
-
-.bg-surface {
-  background-color: var(--color-surface);
-}
-
-/* Border utilities */
-.border-subtle {
-  border-color: var(--color-border);
+  .section-sub {
+    @apply text-sand-500 font-sans text-base mt-2 leading-relaxed;
+  }
 }

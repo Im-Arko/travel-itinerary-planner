@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { errorMessage } from '../utils/formatters';
-import { Mail, Lock, Plane } from 'lucide-react';
+import { Mail, Lock, Plane, Eye, EyeOff } from 'lucide-react';
+
+const BG =
+  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1400&q=80&auto=format&fit=crop';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
+  const [showPw, setShowPw]     = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]       = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -16,7 +20,6 @@ export function LoginPage() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     try {
       await login(email, password);
       navigate('/destinations');
@@ -28,78 +31,104 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-warm-lg p-8 border border-neutral-100">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-block p-3 bg-primary-100 rounded-full mb-4">
-              <Plane className="w-8 h-8 text-primary-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-neutral-800 mb-2 font-serif">Welcome Back</h1>
-            <p className="text-neutral-600">Login to continue your journey</p>
+    <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
+      {/* ── Left: form ── */}
+      <div className="flex flex-col items-center justify-center px-8 py-16 bg-sand-50">
+        <Link to="/" className="flex items-center gap-2 mb-12 group">
+          <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center shadow-warm">
+            <Plane className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
+          <span className="font-serif text-2xl font-bold text-sand-800 italic">
+            Travel<span className="text-primary-500 not-italic">AI</span>
+          </span>
+        </Link>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="w-full max-w-sm">
+          <h1 className="font-serif text-4xl font-bold text-sand-800 mb-2">Welcome back</h1>
+          <p className="text-sand-400 font-sans text-sm mb-10">
+            Continue your journey where you left off.
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
                 {error}
-              </div>
+              </p>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Email Address
-              </label>
+              <label className="label" htmlFor="email">Email address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-300 pointer-events-none" />
                 <input
+                  id="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="you@example.com"
                   required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="input pl-10"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Password
-              </label>
+              <label className="label" htmlFor="password">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-300 pointer-events-none" />
                 <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="••••••••"
+                  id="password"
+                  type={showPw ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="input pl-10 pr-10"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(v => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sand-300 hover:text-sand-500 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-primary-600 to-secondary-700 text-white rounded-lg font-semibold hover:from-primary-700 hover:to-secondary-800 transition-all shadow-warm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full py-3.5 text-base rounded-xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-neutral-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-primary-600 hover:text-primary-700 font-semibold">
-                Sign up
-              </Link>
-            </p>
-          </div>
+          <p className="text-center text-sm text-sand-400 mt-8">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-primary-500 font-medium hover:text-primary-600 transition-colors">
+              Sign up free
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* ── Right: photo ── */}
+      <div className="hidden lg:block relative overflow-hidden">
+        <img
+          src={BG}
+          alt="Travel"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/55" />
+        <div className="absolute bottom-12 left-12 right-12 text-white">
+          <p className="font-serif text-3xl font-semibold italic leading-snug">
+            "The world is a book, and those who do not travel read only one page."
+          </p>
+          <p className="font-sans text-sm text-white/55 mt-4">— Saint Augustine</p>
         </div>
       </div>
     </div>

@@ -1,61 +1,37 @@
-import { motion } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-export function LoadingState() {
-  return (
-    <div className="max-w-2xl mx-auto text-center py-20">
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        className="inline-block mb-6"
-      >
-        <Sparkles className="w-16 h-16 text-primary" />
-      </motion.div>
+interface LoadingStateProps {
+  message?: string;
+  subMessage?: string;
+  fullPage?: boolean;
+}
 
-      <h2 className="text-3xl font-bold text-neutral-900 mb-4 font-serif">
-        Generating Your Perfect Itinerary
-      </h2>
-
-      <div className="space-y-3 text-neutral-600">
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          🔍 Analyzing your preferences with vector similarity search...
-        </motion.p>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          🤖 Running LLM recommendations for personalized experiences...
-        </motion.p>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.0 }}
-        >
-          ✨ Crafting the perfect day-by-day itinerary...
-        </motion.p>
-      </div>
-
-      <div className="mt-8 flex justify-center">
-        <div className="flex gap-2">
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              className="w-3 h-3 bg-primary rounded-full"
-              animate={{ y: [0, -10, 0] }}
-              transition={{
-                duration: 0.6,
-                repeat: Infinity,
-                delay: i * 0.2
-              }}
-            />
-          ))}
+export default function LoadingState({
+  message = 'Loading…',
+  subMessage,
+  fullPage = false,
+}: LoadingStateProps) {
+  const inner = (
+    <div className="flex flex-col items-center justify-center gap-4 text-center p-12">
+      <div className="relative">
+        <div className="w-14 h-14 rounded-2xl bg-primary-50 border border-primary-100 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 text-primary-400 animate-spin" />
         </div>
+      </div>
+      <div>
+        <p className="font-serif text-lg text-sand-700">{message}</p>
+        {subMessage && <p className="text-sm text-sand-400 mt-1">{subMessage}</p>}
       </div>
     </div>
   );
+
+  if (fullPage) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        {inner}
+      </div>
+    );
+  }
+
+  return <div className="card">{inner}</div>;
 }

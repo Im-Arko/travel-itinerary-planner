@@ -1,158 +1,131 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Map, Heart, Sparkles, Globe } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Wand2, Map, Heart, Sparkles, ArrowRight, Star } from 'lucide-react';
+
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80&auto=format&fit=crop';
+
+const features = [
+  {
+    icon: Sparkles,
+    color: 'primary',
+    title: 'AI-Powered Recommendations',
+    desc: 'Advanced LLM technology analyzes your preferences to create perfectly tailored day-by-day itineraries.',
+  },
+  {
+    icon: Map,
+    color: 'forest',
+    title: 'Vector Similarity Search',
+    desc: 'Find destinations that match your vibe using semantic similarity — not just keywords.',
+  },
+  {
+    icon: Heart,
+    color: 'sky',
+    title: 'Save & Revisit',
+    desc: 'Save your favourite itineraries, rate them, and access them anytime from anywhere.',
+  },
+];
+
+const iconBg: Record<string, string> = {
+  primary: 'bg-primary-50 text-primary-500 border-primary-100',
+  forest:  'bg-forest-50  text-forest-500  border-forest-100',
+  sky:     'bg-sky-50     text-sky-500     border-sky-100',
+};
 
 export function HomePage() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section - Full-bleed travel photo with dark scrim */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80')"
-          }}
-        >
-          {/* Dark overlay scrim */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
-        </div>
+    <div>
+      {/* ── Hero ── */}
+      <section className="relative h-[88vh] min-h-[560px] flex items-center justify-center overflow-hidden">
+        <img
+          src={HERO_IMAGE}
+          alt="Open road travel"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/35 to-black/65" />
 
-        {/* Content */}
-        <div className="max-w-5xl mx-auto text-center relative z-10 px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="inline-block mb-6"
-            >
-              <Globe className="w-20 h-20 text-white mx-auto" strokeWidth={1.5} />
-            </motion.div>
+        <div className="relative z-10 text-center max-w-3xl mx-auto px-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-white/90 text-sm font-sans mb-8">
+            <Star className="w-3.5 h-3.5 text-primary-300" fill="currentColor" />
+            AI-powered · Vector search · Personalized
+          </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 font-serif text-white">
-              AI-Powered Travel Planning
-            </h1>
+          <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl font-bold text-white leading-[1.08] tracking-tight mb-6">
+            Your perfect trip,{' '}
+            <em className="text-primary-300 not-italic">planned for you</em>
+          </h1>
 
-            <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
-              Personalized itineraries crafted by advanced AI and vector similarity search.
-              Your perfect journey awaits.
-            </p>
+          <p className="text-white/75 font-sans text-lg sm:text-xl leading-relaxed mb-10 max-w-xl mx-auto">
+            Personalized itineraries crafted by advanced AI and vector similarity search.
+            Tell us what you love — we'll handle the rest.
+          </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/generate"
-                    className="px-8 py-4 bg-gradient-to-r from-primary to-primary/80 text-white rounded-xl font-semibold hover:from-primary/90 hover:to-primary/70 transition-all shadow-lg hover:shadow-xl ring-1 ring-white/20 ring-inset"
-                  >
-                    Generate Itinerary
-                  </Link>
-                  <Link
-                    to="/destinations"
-                    className="px-8 py-4 bg-transparent text-white rounded-xl font-semibold hover:bg-white/10 transition-all border-2 border-white/50 hover:border-white"
-                  >
-                    Browse Destinations
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/register"
-                    className="px-8 py-4 bg-gradient-to-r from-primary to-primary/80 text-white rounded-xl font-semibold hover:from-primary/90 hover:to-primary/70 transition-all shadow-lg hover:shadow-xl ring-1 ring-white/20 ring-inset"
-                  >
-                    Get Started Free
-                  </Link>
-                  <Link
-                    to="/login"
-                    className="px-8 py-4 bg-transparent text-white rounded-xl font-semibold hover:bg-white/10 transition-all border-2 border-white/50 hover:border-white"
-                  >
-                    Login
-                  </Link>
-                </>
-              )}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-neutral-800 font-serif">
-            Why Choose TravelAI?
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-2xl p-8 shadow-[0_4px_24px_rgba(200,75,49,0.08)] hover:shadow-[0_8px_32px_rgba(200,75,49,0.12)] hover:scale-[1.02] transition-all duration-300 border border-[#e8e2d9]"
-            >
-              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Sparkles className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-neutral-900 font-serif">AI-Powered Recommendations</h3>
-              <p className="text-neutral-600">
-                Advanced LLM technology analyzes your preferences to create perfectly tailored itineraries.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-8 shadow-[0_4px_24px_rgba(45,106,79,0.08)] hover:shadow-[0_8px_32px_rgba(45,106,79,0.12)] hover:scale-[1.02] transition-all duration-300 border border-[#e8e2d9]"
-            >
-              <div className="w-14 h-14 bg-secondary/10 rounded-full flex items-center justify-center mb-4">
-                <Map className="w-7 h-7 text-secondary" />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-neutral-900 font-serif">Vector Search</h3>
-              <p className="text-neutral-600">
-                Find destinations that match your vibe using semantic similarity search technology.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-8 shadow-[0_4px_24px_rgba(32,121,158,0.08)] hover:shadow-[0_8px_32px_rgba(32,121,158,0.12)] hover:scale-[1.02] transition-all duration-300 border border-[#e8e2d9]"
-            >
-              <div className="w-14 h-14 bg-accent/10 rounded-full flex items-center justify-center mb-4">
-                <Heart className="w-7 h-7 text-accent" />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-neutral-900 font-serif">Save & Share</h3>
-              <p className="text-neutral-600">
-                Save your favorite itineraries, rate them, and access them anytime from anywhere.
-              </p>
-            </motion.div>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {isAuthenticated ? (
+              <>
+                <Link to="/generate" className="btn-primary text-base px-8 py-4 rounded-2xl shadow-warm-lg">
+                  <Wand2 className="w-5 h-5" /> Generate Itinerary
+                </Link>
+                <Link to="/destinations" className="btn-ghost text-base px-8 py-4 rounded-2xl">
+                  Browse Destinations <ArrowRight className="w-5 h-5" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/register" className="btn-primary text-base px-8 py-4 rounded-2xl shadow-warm-lg">
+                  Get Started Free
+                </Link>
+                <Link to="/login" className="btn-ghost text-base px-8 py-4 rounded-2xl">
+                  Login <ArrowRight className="w-5 h-5" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* ── Features ── */}
+      <section className="max-w-7xl mx-auto px-6 py-24">
+        <div className="text-center mb-16">
+          <h2 className="page-header text-4xl">Why Choose TravelAI?</h2>
+          <p className="page-sub max-w-xl mx-auto">
+            Three layers of intelligence working together so every recommendation feels personal.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {features.map(({ icon: Icon, color, title, desc }) => (
+            <div
+              key={title}
+              className="card p-8 hover:shadow-warm-lg hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center mb-6 ${iconBg[color]}`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-xl font-semibold text-sand-800 mb-3">{title}</h3>
+              <p className="text-sand-400 font-sans text-sm leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
       {!isAuthenticated && (
-        <section className="py-16 px-4">
-          <div className="max-w-4xl mx-auto bg-gradient-to-r from-primary to-primary/80 rounded-3xl p-12 text-center text-white shadow-warm-xl ring-1 ring-white/20 ring-inset">
-            <h2 className="text-4xl font-bold mb-4 font-serif">Ready to Start Your Journey?</h2>
-            <p className="text-xl mb-8 opacity-90">
-              Join thousands of travelers who trust TravelAI to plan their perfect trips.
+        <section className="bg-sand-800 py-20 px-6">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="font-serif text-4xl font-bold text-white mb-4">
+              Ready to start your journey?
+            </h2>
+            <p className="text-sand-300 font-sans text-base mb-10 leading-relaxed">
+              Join travelers who've let AI handle the planning while they focus on the experience.
             </p>
             <Link
               to="/register"
-              className="inline-block px-10 py-4 bg-white text-primary rounded-xl font-bold hover:bg-neutral-100 transition-all shadow-warm text-lg"
+              className="btn-primary text-base px-10 py-4 rounded-2xl shadow-warm-xl"
             >
-              Create Free Account
+              Create free account <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         </section>
