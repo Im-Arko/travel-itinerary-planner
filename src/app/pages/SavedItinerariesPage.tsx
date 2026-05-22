@@ -44,8 +44,8 @@ export function SavedItinerariesPage() {
     <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-800 mb-3">Saved Itineraries</h1>
-          <p className="text-lg text-gray-600">Your backend-saved travel plans.</p>
+          <h1 className="text-4xl font-bold text-neutral-800 mb-3 font-serif">Saved Itineraries</h1>
+          <p className="text-lg text-neutral-600">Your backend-saved travel plans.</p>
         </div>
 
         {error && (
@@ -56,31 +56,31 @@ export function SavedItinerariesPage() {
         )}
 
         {isLoading ? (
-          <p className="text-gray-600">Loading itineraries...</p>
+          <p className="text-neutral-600">Loading itineraries...</p>
         ) : itineraries.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {itineraries.map(itinerary => (
-              <div key={itinerary.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow overflow-hidden">
-                <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white">
-                  <button onClick={() => toggleFavorite(itinerary)} className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors">
-                    <Heart className={`w-5 h-5 ${itinerary.is_favorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+              <div key={itinerary.id} className="bg-white rounded-xl shadow-warm hover:shadow-warm-lg transition-shadow overflow-hidden border border-neutral-100">
+                <div className="relative bg-gradient-to-r from-primary to-secondary p-5 text-white">
+                  <button onClick={() => toggleFavorite(itinerary)} className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-warm">
+                    <Heart className={`w-5 h-5 ${itinerary.is_favorite ? 'fill-red-500 text-red-500' : 'text-neutral-600'}`} />
                   </button>
-                  <h3 className="mr-12 text-xl font-bold">{itinerary.title}</h3>
-                  <p className="mt-2 text-blue-50">{itinerary.summary || itinerary.destination_name}</p>
+                  <h3 className="mr-12 text-xl font-bold font-serif">{itinerary.title}</h3>
+                  <p className="mt-2 text-white/90">{itinerary.summary || itinerary.destination_name}</p>
                 </div>
 
                 <div className="p-5">
                   <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-gray-600 text-sm">
-                      <MapPin className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-neutral-600 text-sm">
+                      <MapPin className="w-4 h-4 text-primary" />
                       {itinerary.destination_name}
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600 text-sm">
-                      <Calendar className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-neutral-600 text-sm">
+                      <Calendar className="w-4 h-4 text-primary" />
                       {itinerary.duration_days} days, created {new Date(itinerary.generated_at).toLocaleDateString()}
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600 text-sm">
-                      <DollarSign className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-neutral-600 text-sm">
+                      <DollarSign className="w-4 h-4 text-primary" />
                       {itinerary.budget}
                     </div>
                   </div>
@@ -88,13 +88,13 @@ export function SavedItinerariesPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, idx) => (
-                        <Star key={idx} className={`w-4 h-4 ${idx < (itinerary.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                        <Star key={idx} className={`w-4 h-4 ${idx < (itinerary.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-300'}`} />
                       ))}
                     </div>
-                    <span className="text-xs text-gray-500 capitalize">{itinerary.status}</span>
+                    <span className="text-xs text-neutral-500 capitalize">{itinerary.status}</span>
                   </div>
 
-                  <Link to={`/itineraries/${itinerary.id}`} className="block w-full py-2 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                  <Link to={`/itineraries/${itinerary.id}`} className="block w-full py-2 bg-primary text-white text-center rounded-lg hover:bg-primary/90 transition-colors font-medium">
                     View Details
                   </Link>
                 </div>
@@ -103,12 +103,12 @@ export function SavedItinerariesPage() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
-              <Heart className="w-12 h-12 text-gray-400" />
+            <div className="inline-block p-4 bg-neutral-100 rounded-full mb-4">
+              <Heart className="w-12 h-12 text-neutral-400" />
             </div>
-            <h3 className="text-2xl font-semibold text-gray-800 mb-2">No saved itineraries yet</h3>
-            <p className="text-gray-600 mb-6">Generate your first itinerary to get started.</p>
-            <Link to="/generate" className="inline-block px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg">
+            <h3 className="text-2xl font-semibold text-neutral-800 mb-2 font-serif">No saved itineraries yet</h3>
+            <p className="text-neutral-600 mb-6">Generate your first itinerary to get started.</p>
+            <Link to="/generate" className="inline-block px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-semibold hover:from-primary/90 hover:to-secondary/90 transition-all shadow-warm-lg ring-1 ring-white/20 ring-inset">
               Generate Itinerary
             </Link>
           </div>

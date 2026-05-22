@@ -44,10 +44,10 @@ export function TravelGallery() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent font-serif">
             Discover Your Dream Destination
           </h2>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-neutral-600">
             From bustling cities to serene beaches, the world is waiting for you
           </p>
         </motion.div>
@@ -88,11 +88,11 @@ export function TravelGallery() {
           viewport={{ once: true }}
           className="text-center mt-20"
         >
-          <div className="inline-block bg-white rounded-2xl shadow-lg px-8 py-6">
-            <p className="text-2xl font-semibold text-gray-800 mb-2">
+          <div className="inline-block bg-white rounded-2xl shadow-warm-lg px-8 py-6 border border-neutral-100">
+            <p className="text-2xl font-semibold text-neutral-800 mb-2 font-serif">
               Ready to plan your perfect trip?
             </p>
-            <p className="text-gray-600">
+            <p className="text-neutral-600">
               Keep scrolling to start building your personalized itinerary
             </p>
           </div>

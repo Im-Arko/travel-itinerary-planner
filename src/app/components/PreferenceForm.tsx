@@ -43,14 +43,14 @@ export function PreferenceForm({ onSubmit }: PreferenceFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto p-8 bg-white rounded-2xl shadow-lg">
-      <h2 className="text-3xl font-bold mb-8 text-gray-900">Plan Your Perfect Trip</h2>
+    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto p-8 bg-white rounded-2xl shadow-warm-lg border border-neutral-100">
+      <h2 className="text-3xl font-bold mb-8 text-neutral-900 font-serif">Plan Your Perfect Trip</h2>
 
       <div className="space-y-8">
         {/* Destination */}
         <div>
-          <label className="flex items-center gap-2 text-gray-700 font-medium mb-3">
-            <MapPin className="w-5 h-5 text-blue-600" />
+          <label className="flex items-center gap-2 text-neutral-700 font-medium mb-3">
+            <MapPin className="w-5 h-5 text-primary-600" />
             Where would you like to go?
           </label>
           <input
@@ -58,15 +58,15 @@ export function PreferenceForm({ onSubmit }: PreferenceFormProps) {
             placeholder="e.g., Japan, Italy, Thailand..."
             value={preferences.destination}
             onChange={(e) => setPreferences({ ...preferences, destination: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             required
           />
         </div>
 
         {/* Duration */}
         <div>
-          <label className="flex items-center gap-2 text-gray-700 font-medium mb-3">
-            <Calendar className="w-5 h-5 text-blue-600" />
+          <label className="flex items-center gap-2 text-neutral-700 font-medium mb-3">
+            <Calendar className="w-5 h-5 text-primary-600" />
             Trip Duration: {preferences.duration} days
           </label>
           <Slider
@@ -74,14 +74,14 @@ export function PreferenceForm({ onSubmit }: PreferenceFormProps) {
             onChange={(_, value) => setPreferences({ ...preferences, duration: value as number })}
             min={1}
             max={30}
-            sx={{ color: '#2563eb' }}
+            sx={{ color: '#c84b31' }}
           />
         </div>
 
         {/* Budget */}
         <div>
-          <label className="flex items-center gap-2 text-gray-700 font-medium mb-3">
-            <DollarSign className="w-5 h-5 text-blue-600" />
+          <label className="flex items-center gap-2 text-neutral-700 font-medium mb-3">
+            <DollarSign className="w-5 h-5 text-primary-600" />
             Budget: ${preferences.budget.toLocaleString()}
           </label>
           <Slider
@@ -90,14 +90,14 @@ export function PreferenceForm({ onSubmit }: PreferenceFormProps) {
             min={500}
             max={10000}
             step={500}
-            sx={{ color: '#2563eb' }}
+            sx={{ color: '#c84b31' }}
           />
         </div>
 
         {/* Travelers */}
         <div>
-          <label className="flex items-center gap-2 text-gray-700 font-medium mb-3">
-            <Users className="w-5 h-5 text-blue-600" />
+          <label className="flex items-center gap-2 text-neutral-700 font-medium mb-3">
+            <Users className="w-5 h-5 text-primary-600" />
             Number of Travelers: {preferences.travelers}
           </label>
           <Slider
@@ -105,14 +105,14 @@ export function PreferenceForm({ onSubmit }: PreferenceFormProps) {
             onChange={(_, value) => setPreferences({ ...preferences, travelers: value as number })}
             min={1}
             max={10}
-            sx={{ color: '#2563eb' }}
+            sx={{ color: '#c84b31' }}
           />
         </div>
 
         {/* Interests */}
         <div>
-          <label className="flex items-center gap-2 text-gray-700 font-medium mb-3">
-            <Heart className="w-5 h-5 text-blue-600" />
+          <label className="flex items-center gap-2 text-neutral-700 font-medium mb-3">
+            <Heart className="w-5 h-5 text-primary-600" />
             What interests you?
           </label>
           <div className="flex flex-wrap gap-3">
@@ -123,8 +123,8 @@ export function PreferenceForm({ onSubmit }: PreferenceFormProps) {
                 onClick={() => toggleInterest(interest)}
                 className={`px-4 py-2 rounded-full font-medium transition-all ${
                   preferences.interests.includes(interest)
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                 }`}
               >
                 {interest}
@@ -135,7 +135,7 @@ export function PreferenceForm({ onSubmit }: PreferenceFormProps) {
 
         <button
           type="submit"
-          className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg"
+          className="w-full py-4 bg-gradient-to-r from-primary-600 to-secondary-700 text-white font-semibold rounded-lg hover:from-primary-700 hover:to-secondary-800 transition-all shadow-warm-lg"
         >
           Generate Personalized Itinerary
         </button>

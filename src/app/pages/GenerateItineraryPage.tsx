@@ -99,180 +99,180 @@ export function GenerateItineraryPage() {
   if (loading) return null;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="inline-block p-4 bg-purple-100 rounded-full mb-4">
-            <Sparkles className="w-10 h-10 text-purple-600" />
+      <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-block p-4 bg-primary/10 rounded-full mb-4">
+              <Sparkles className="w-10 h-10 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold text-neutral-800 mb-3 font-serif">Generate Your Itinerary</h1>
+            <p className="text-lg text-neutral-600">Create a backend-generated itinerary using vector search and the LLM service.</p>
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-3">Generate Your Itinerary</h1>
-          <p className="text-lg text-gray-600">Create a backend-generated itinerary using vector search and the LLM service.</p>
-        </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Trip Details</h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-2xl shadow-warm-lg p-8 border border-neutral-100">
+              <h2 className="text-2xl font-bold text-neutral-800 mb-6 font-serif">Trip Details</h2>
 
-            <form onSubmit={handleGenerate} className="space-y-6">
-              <div>
-                <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
-                  <MapPin className="w-5 h-5 text-blue-600" />
-                  Destination Hint
-                </label>
-                <input
-                  value={destinationHint}
-                  onChange={(e) => setDestinationHint(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Paris, tropical beaches, mountain towns..."
-                />
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
-                  <Calendar className="w-5 h-5 text-blue-600" />
-                  Duration: {duration} days
-                </label>
-                <Slider value={duration} onChange={(_, value) => setDuration(value as number)} min={1} max={30} sx={{ color: '#2563eb' }} />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <form onSubmit={handleGenerate} className="space-y-6">
                 <div>
-                  <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
-                    <DollarSign className="w-5 h-5 text-blue-600" />
-                    Budget
+                  <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-3">
+                    <MapPin className="w-5 h-5 text-primary" />
+                    Destination Hint
                   </label>
-                  <select value={budget} onChange={(e) => setBudget(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    {budgets.map(option => <option key={option} value={option}>{option}</option>)}
-                  </select>
+                  <input
+                    value={destinationHint}
+                    onChange={(e) => setDestinationHint(e.target.value)}
+                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    placeholder="Paris, tropical beaches, mountain towns..."
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-gray-800 font-semibold mb-3">Climate</label>
-                  <select value={climate} onChange={(e) => setClimate(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    {climates.map(option => <option key={option} value={option}>{option}</option>)}
-                  </select>
+                  <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-3">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    Duration: {duration} days
+                  </label>
+                  <Slider value={duration} onChange={(_, value) => setDuration(value as number)} min={1} max={30} sx={{ color: '#c84b31' }} />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-3">
+                      <DollarSign className="w-5 h-5 text-primary" />
+                      Budget
+                    </label>
+                    <select value={budget} onChange={(e) => setBudget(e.target.value)} className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" required>
+                      {budgets.map(option => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-neutral-800 font-semibold mb-3">Climate</label>
+                    <select value={climate} onChange={(e) => setClimate(e.target.value)} className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                      {climates.map(option => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-neutral-800 font-semibold mb-3">Destination Type</label>
+                    <select value={destinationType} onChange={(e) => setDestinationType(e.target.value)} className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                      {destinationTypes.map(option => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-neutral-800 font-semibold mb-3">Travel Style</label>
+                    <select value={travelStyle} onChange={(e) => setTravelStyle(e.target.value)} className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                      {travelStyles.map(option => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-gray-800 font-semibold mb-3">Destination Type</label>
-                  <select value={destinationType} onChange={(e) => setDestinationType(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    {destinationTypes.map(option => <option key={option} value={option}>{option}</option>)}
-                  </select>
+                  <label className="flex items-center gap-2 text-neutral-800 font-semibold mb-3">
+                    <Heart className="w-5 h-5 text-primary" />
+                    Interests
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {interestOptions.map(interest => (
+                      <button
+                        key={interest}
+                        type="button"
+                        onClick={() => toggleInterest(interest)}
+                        className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${interests.includes(interest) ? 'bg-primary text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}
+                      >
+                        {interest}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-gray-800 font-semibold mb-3">Travel Style</label>
-                  <select value={travelStyle} onChange={(e) => setTravelStyle(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    {travelStyles.map(option => <option key={option} value={option}>{option}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
-                  <Heart className="w-5 h-5 text-blue-600" />
-                  Interests
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {interestOptions.map(interest => (
-                    <button
-                      key={interest}
-                      type="button"
-                      onClick={() => toggleInterest(interest)}
-                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${interests.includes(interest) ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                    >
-                      {interest}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button type="submit" disabled={isGenerating} className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {isGenerating ? <><Loader className="w-5 h-5 animate-spin" />Generating...</> : <><Sparkles className="w-5 h-5" />Generate Itinerary</>}
-              </button>
-            </form>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 font-semibold text-blue-900">
-                  <Database className="h-5 w-5" />
-                  Vector Pipeline
-                </div>
-                <button
-                  type="button"
-                  onClick={validatePipeline}
-                  disabled={isValidatingPipeline}
-                  className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {isValidatingPipeline ? 'Checking...' : 'Validate'}
+                <button type="submit" disabled={isGenerating} className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-semibold hover:from-primary/90 hover:to-secondary/90 transition-all shadow-warm-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ring-1 ring-white/20 ring-inset">
+                  {isGenerating ? <><Loader className="w-5 h-5 animate-spin" />Generating...</> : <><Sparkles className="w-5 h-5" />Generate Itinerary</>}
                 </button>
-              </div>
-              {pipelineStatus ? (
-                <p className="flex items-center gap-2 text-sm text-blue-800">
-                  <CheckCircle className="h-4 w-4" />
-                  {pipelineStatus}
-                </p>
-              ) : (
-                <p className="text-sm text-blue-800">Checks vector count and ingests destinations when needed.</p>
-              )}
+              </form>
             </div>
 
-            {isGenerating && (
-              <div className="text-center py-12">
-                <div className="inline-block p-4 bg-purple-100 rounded-full mb-4 animate-pulse">
-                  <Sparkles className="w-12 h-12 text-purple-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Creating Your Trip</h3>
-                <p className="text-gray-600">The backend is searching destinations and generating a day-wise itinerary.</p>
-              </div>
-            )}
-
-            {!isGenerating && error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-                <div className="mb-2 flex items-center gap-2 font-semibold">
-                  <AlertCircle className="h-5 w-5" />
-                  Generation failed
-                </div>
-                <p>{error}</p>
-              </div>
-            )}
-
-            {!isGenerating && !error && !generatedItinerary && (
-              <div className="text-center py-12">
-                <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
-                  <Sparkles className="w-12 h-12 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Ready to Generate</h3>
-                <p className="text-gray-600">Fill out the form to call the backend generator.</p>
-              </div>
-            )}
-
-            {generatedItinerary && !isGenerating && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-6">
-                  <h3 className="text-2xl font-bold mb-2">{generatedItinerary.title}</h3>
-                  <p className="text-blue-50">{generatedItinerary.summary}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="rounded-lg bg-gray-50 p-4">
-                    <p className="text-gray-500">Destination</p>
-                    <p className="font-semibold text-gray-800">{generatedItinerary.destination_name}</p>
+            <div className="bg-white rounded-2xl shadow-warm-lg p-8 border border-neutral-100">
+              <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 font-semibold text-neutral-800">
+                    <Database className="h-5 w-5 text-primary" />
+                    Vector Pipeline
                   </div>
-                  <div className="rounded-lg bg-gray-50 p-4">
-                    <p className="text-gray-500">Duration</p>
-                    <p className="font-semibold text-gray-800">{generatedItinerary.duration_days} days</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={validatePipeline}
+                    disabled={isValidatingPipeline}
+                    className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {isValidatingPipeline ? 'Checking...' : 'Validate'}
+                  </button>
                 </div>
-                <button onClick={() => navigate(`/itineraries/${generatedItinerary.id}`)} className="w-full py-3 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition-all">
-                  View Full Itinerary
-                </button>
+                {pipelineStatus ? (
+                  <p className="flex items-center gap-2 text-sm text-neutral-700">
+                    <CheckCircle className="h-4 w-4 text-secondary" />
+                    {pipelineStatus}
+                  </p>
+                ) : (
+                  <p className="text-sm text-neutral-600">Checks vector count and ingests destinations when needed.</p>
+                )}
               </div>
-            )}
+
+              {isGenerating && (
+                <div className="text-center py-12">
+                  <div className="inline-block p-4 bg-primary/10 rounded-full mb-4 animate-pulse">
+                    <Sparkles className="w-12 h-12 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-800 mb-4 font-serif">Creating Your Trip</h3>
+                  <p className="text-neutral-600">The backend is searching destinations and generating a day-wise itinerary.</p>
+                </div>
+              )}
+
+              {!isGenerating && error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+                  <div className="mb-2 flex items-center gap-2 font-semibold">
+                    <AlertCircle className="h-5 w-5" />
+                    Generation failed
+                  </div>
+                  <p>{error}</p>
+                </div>
+              )}
+
+              {!isGenerating && !error && !generatedItinerary && (
+                <div className="text-center py-12">
+                  <div className="inline-block p-4 bg-neutral-100 rounded-full mb-4">
+                    <Sparkles className="w-12 h-12 text-neutral-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-neutral-800 mb-2 font-serif">Ready to Generate</h3>
+                  <p className="text-neutral-600">Fill out the form to call the backend generator.</p>
+                </div>
+              )}
+
+              {generatedItinerary && !isGenerating && (
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-6 ring-1 ring-white/20 ring-inset">
+                    <h3 className="text-2xl font-bold mb-2 font-serif">{generatedItinerary.title}</h3>
+                    <p className="text-white/90">{generatedItinerary.summary}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="rounded-lg bg-neutral-50 p-4">
+                      <p className="text-neutral-500">Destination</p>
+                      <p className="font-semibold text-neutral-800">{generatedItinerary.destination_name}</p>
+                    </div>
+                    <div className="rounded-lg bg-neutral-50 p-4">
+                      <p className="text-neutral-500">Duration</p>
+                      <p className="font-semibold text-neutral-800">{generatedItinerary.duration_days} days</p>
+                    </div>
+                  </div>
+                  <button onClick={() => navigate(`/itineraries/${generatedItinerary.id}`)} className="w-full py-3 bg-neutral-800 text-white rounded-lg font-semibold hover:bg-neutral-900 transition-all">
+                    View Full Itinerary
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }

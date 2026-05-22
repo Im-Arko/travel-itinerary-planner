@@ -9,14 +9,14 @@ export function LoadingState() {
         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         className="inline-block mb-6"
       >
-        <Sparkles className="w-16 h-16 text-purple-600" />
+        <Sparkles className="w-16 h-16 text-primary" />
       </motion.div>
 
-      <h2 className="text-3xl font-bold text-gray-900 mb-4">
+      <h2 className="text-3xl font-bold text-neutral-900 mb-4 font-serif">
         Generating Your Perfect Itinerary
       </h2>
 
-      <div className="space-y-3 text-gray-600">
+      <div className="space-y-3 text-neutral-600">
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -45,7 +45,7 @@ export function LoadingState() {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="w-3 h-3 bg-blue-600 rounded-full"
+              className="w-3 h-3 bg-primary rounded-full"
               animate={{ y: [0, -10, 0] }}
               transition={{
                 duration: 0.6,
