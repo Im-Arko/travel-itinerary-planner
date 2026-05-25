@@ -268,7 +268,7 @@ export function GenerateItineraryPage() {
 
           {/* Sidebar - Status & Preview */}
           <div className="space-y-6">
-            {/* Vector Pipeline Status */}
+            {/* Vector Pipeline Status 
             <div className="bg-white rounded-2xl shadow-warm p-6 border border-sand-100">
               <div className="flex items-center gap-2 font-semibold text-sand-800 mb-3">
                 <Database className="w-5 h-5 text-primary-500" />
@@ -294,7 +294,7 @@ export function GenerateItineraryPage() {
                 <p className="text-sm text-sand-400">Verify vector store is ready</p>
               )}
             </div>
-
+              */}
             {/* Generation Status */}
             {isGenerating && (
               <div className="bg-white rounded-2xl shadow-warm p-6 border border-sand-100 text-center">

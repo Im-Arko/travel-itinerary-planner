@@ -34,3 +34,5 @@ backend/venv/
 # Python cache
 __pycache__/
 *.pyc
+
+backend/chroma_db/

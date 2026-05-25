@@ -123,6 +123,7 @@ export function DestinationsPage() {
           <h1 className="page-header">Explore destinations</h1>
           <p className="page-sub">Find your next adventure</p>
         </div>
+        {/*
         <button
           onClick={handleIngest}
           disabled={isIngesting}
@@ -131,6 +132,7 @@ export function DestinationsPage() {
           <Database className="w-4 h-4" />
           {isIngesting ? 'Ingesting…' : 'Ingest destinations'}
         </button>
+        */}
       </div>
 
       {/* ── Unified Search Panel ── */}
