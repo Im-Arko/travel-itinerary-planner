@@ -44,3 +44,4 @@ backend/chroma_db/
 .env
 
 backend/.env
+replacements.txt
