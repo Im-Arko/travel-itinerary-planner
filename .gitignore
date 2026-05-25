@@ -31,6 +31,9 @@ chroma/
 venv/
 backend/venv/
 
+backend/.env
+.env
+
 # Python cache
 __pycache__/
 *.pyc
@@ -38,3 +41,6 @@ __pycache__/
 *.bin
 
 backend/chroma_db/
+.env
+
+backend/.env
