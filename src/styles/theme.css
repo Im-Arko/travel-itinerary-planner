@@ -1,225 +1,251 @@
 @custom-variant dark (&:is(.dark *));
 
+/*
+  Pinterest-Inspired Color System for TravelAI
+  ─────────────────────────────────────────────
+  Palette mood: warm, editorial, rich earth tones
+  Dusty rose · Warm terracotta · Sage green · Cream · Warm taupe
+*/
+
 :root {
-  /* Portfolio-inspired warm color system */
   --font-size: 16px;
-  
-  /* Warm paper backgrounds (from your portfolio) */
-  --background: #faf9f6;
-  --foreground: #0f0f0f;
-  
-  /* Card surfaces */
-  --card: #ffffff;
-  --card-foreground: #0f0f0f;
-  
-  /* Popover */
-  --popover: #faf9f6;
-  --popover-foreground: #0f0f0f;
-  
-  /* Primary: Warm terracotta (your portfolio accent #c84b31) */
-  --primary: #c84b31;
-  --primary-foreground: #ffffff;
-  
-  /* Secondary: Deep teal for travel theme */
-  --secondary: #1e3d59;
-  --secondary-foreground: #ffffff;
-  
-  /* Muted: Warm grays */
-  --muted: #f2efe8;
-  --muted-foreground: #635d51;
-  
-  /* Accent: Sky blue for travel theme */
-  --accent: #20799e;
-  --accent-foreground: #ffffff;
-  
-  /* Destructive: Keep red for errors */
-  --destructive: #c84b31; /* Using terracotta for consistency */
-  --destructive-foreground: #ffffff;
-  
-  /* Borders: Warm subtle borders */
-  --border: #e5e0d5;
-  --input: transparent;
-  --input-background: #f2efe8;
-  --switch-background: #cec8b9;
-  
-  /* Font weights */
+
+  /* ── Backgrounds ── */
+  /* Warm ivory — feels like high-quality paper */
+  --background:      #FAF6F1;
+  --foreground:      #2C2420;
+
+  /* Card: slightly warmer than background */
+  --card:            #FFFFFF;
+  --card-foreground: #2C2420;
+
+  --popover:            #FAF6F1;
+  --popover-foreground: #2C2420;
+
+  /* ── Primary: Rich terracotta (deeper & more saturated than before) ── */
+  --primary:            #C0392B;
+  --primary-foreground: #FFFFFF;
+
+  /* ── Secondary: Dusty rose/mauve — very Pinterest ── */
+  --secondary:            #C4737A;
+  --secondary-foreground: #FFFFFF;
+
+  /* ── Muted: Warm cream surface ── */
+  --muted:            #F0E9DF;
+  --muted-foreground: #7A6E65;
+
+  /* ── Accent: Sage green — earthy, natural ── */
+  --accent:            #7C9A7E;
+  --accent-foreground: #FFFFFF;
+
+  /* ── Destructive ── */
+  --destructive:            #B03A2E;
+  --destructive-foreground: #FFFFFF;
+
+  /* ── Borders & inputs ── */
+  --border:           #E8DFD4;
+  --input:            transparent;
+  --input-background: #F5EDE3;
+  --switch-background: #D4C4B5;
+
+  /* ── Font weights ── */
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  
-  /* Ring: Primary color for focus states */
-  --ring: #c84b31;
-  
-  /* Chart colors - travel-inspired palette */
-  --chart-1: #c84b31; /* Terracotta */
-  --chart-2: #1e3d59; /* Deep teal */
-  --chart-3: #20799e; /* Sky blue */
-  --chart-4: #dd6a4e; /* Light terracotta */
-  --chart-5: #4a7d63; /* Light forest green */
-  
-  /* Radius */
-  --radius: 0.5rem;
-  
-  /* Sidebar */
-  --sidebar: #faf9f6;
-  --sidebar-foreground: #0f0f0f;
-  --sidebar-primary: #c84b31;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f2efe8;
-  --sidebar-accent-foreground: #0f0f0f;
-  --sidebar-border: #e5e0d5;
-  --sidebar-ring: #c84b31;
+
+  /* ── Ring (focus) ── */
+  --ring: #C0392B;
+
+  /* ── Chart: Pinterest editorial tones ── */
+  --chart-1: #C0392B; /* Terracotta red  */
+  --chart-2: #C4737A; /* Dusty rose      */
+  --chart-3: #7C9A7E; /* Sage green      */
+  --chart-4: #D4956A; /* Warm amber      */
+  --chart-5: #8B7355; /* Warm taupe      */
+
+  --radius: 0.625rem;
+
+  /* ── Sidebar ── */
+  --sidebar:                    #F5EDE3;
+  --sidebar-foreground:         #2C2420;
+  --sidebar-primary:            #C0392B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:             #EDE0D4;
+  --sidebar-accent-foreground:  #2C2420;
+  --sidebar-border:             #E8DFD4;
+  --sidebar-ring:               #C0392B;
 }
 
 .dark {
-  /* Dark mode - inspired by your second portfolio */
-  --background: #0b0c0e;
-  --foreground: #e8e6e0;
-  
-  --card: #111215;
-  --card-foreground: #e8e6e0;
-  
-  --popover: #0b0c0e;
-  --popover-foreground: #e8e6e0;
-  
-  /* Primary: Warm gold in dark mode */
-  --primary: #d4a853;
-  --primary-foreground: #0b0c0e;
-  
-  /* Secondary: Cool blue in dark mode */
-  --secondary: #4a9eed;
-  --secondary-foreground: #0b0c0e;
-  
-  /* Muted */
-  --muted: #181a1e;
-  --muted-foreground: #6b6d72;
-  
-  /* Accent */
-  --accent: #3a95b9;
-  --accent-foreground: #0b0c0e;
-  
-  --destructive: #d4a853;
-  --destructive-foreground: #0b0c0e;
-  
-  --border: rgba(255, 255, 255, 0.07);
-  --input: transparent;
-  --input-background: #181a1e;
-  
+  /* ── Dark mode: Deep mocha + warm gold highlights ── */
+  --background:      #1A1410;
+  --foreground:      #EDE5DA;
+
+  --card:            #221C17;
+  --card-foreground: #EDE5DA;
+
+  --popover:            #1A1410;
+  --popover-foreground: #EDE5DA;
+
+  /* Primary: Warm dusty rose in dark (Pinterest boards look great on dark) */
+  --primary:            #D4847A;
+  --primary-foreground: #1A1410;
+
+  /* Secondary: Muted sage */
+  --secondary:            #8FAF91;
+  --secondary-foreground: #1A1410;
+
+  --muted:            #2A211A;
+  --muted-foreground: #9A8E84;
+
+  /* Accent: Warm amber */
+  --accent:            #C9935A;
+  --accent-foreground: #1A1410;
+
+  --destructive:            #D4847A;
+  --destructive-foreground: #1A1410;
+
+  --border:           rgba(255, 240, 220, 0.09);
+  --input:            transparent;
+  --input-background: #2A211A;
+
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  
-  --ring: #d4a853;
-  
-  --chart-1: #d4a853; /* Gold */
-  --chart-2: #4a9eed; /* Blue */
-  --chart-3: #3a95b9; /* Sky */
-  --chart-4: #e0b862; /* Light gold */
-  --chart-5: #5aaaf5; /* Light blue */
-  
-  --sidebar: #111215;
-  --sidebar-foreground: #e8e6e0;
-  --sidebar-primary: #d4a853;
-  --sidebar-primary-foreground: #0b0c0e;
-  --sidebar-accent: #181a1e;
-  --sidebar-accent-foreground: #e8e6e0;
-  --sidebar-border: rgba(255, 255, 255, 0.07);
-  --sidebar-ring: #d4a853;
+
+  --ring: #D4847A;
+
+  --chart-1: #D4847A; /* Dusty rose */
+  --chart-2: #8FAF91; /* Sage        */
+  --chart-3: #C9935A; /* Amber       */
+  --chart-4: #E0A898; /* Blush       */
+  --chart-5: #A8C4AA; /* Pale sage   */
+
+  --sidebar:                    #221C17;
+  --sidebar-foreground:         #EDE5DA;
+  --sidebar-primary:            #D4847A;
+  --sidebar-primary-foreground: #1A1410;
+  --sidebar-accent:             #2A211A;
+  --sidebar-accent-foreground:  #EDE5DA;
+  --sidebar-border:             rgba(255, 240, 220, 0.09);
+  --sidebar-ring:               #D4847A;
 }
 
 @theme inline {
-  /* Core colors */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
+  /* ── Core tokens ── */
+  --color-background:             var(--background);
+  --color-foreground:             var(--foreground);
+  --color-card:                   var(--card);
+  --color-card-foreground:        var(--card-foreground);
+  --color-popover:                var(--popover);
+  --color-popover-foreground:     var(--popover-foreground);
+  --color-primary:                var(--primary);
+  --color-primary-foreground:     var(--primary-foreground);
+  --color-secondary:              var(--secondary);
+  --color-secondary-foreground:   var(--secondary-foreground);
+  --color-muted:                  var(--muted);
+  --color-muted-foreground:       var(--muted-foreground);
+  --color-accent:                 var(--accent);
+  --color-accent-foreground:      var(--accent-foreground);
+  --color-destructive:            var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-input-background: var(--input-background);
-  --color-switch-background: var(--switch-background);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  
-  /* Radius */
+  --color-border:                 var(--border);
+  --color-input:                  var(--input);
+  --color-input-background:       var(--input-background);
+  --color-switch-background:      var(--switch-background);
+  --color-ring:                   var(--ring);
+  --color-chart-1:                var(--chart-1);
+  --color-chart-2:                var(--chart-2);
+  --color-chart-3:                var(--chart-3);
+  --color-chart-4:                var(--chart-4);
+  --color-chart-5:                var(--chart-5);
+
+  /* ── Radius ── */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  
-  /* Sidebar */
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
+  --radius-xl: calc(var(--radius) + 6px);
+
+  /* ── Sidebar ── */
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  
-  /* Extended portfolio color palette */
-  --color-primary-50: #fdf2f0;
-  --color-primary-100: #fae8e4;
-  --color-primary-200: #f5d1c9;
-  --color-primary-300: #eeb5a5;
-  --color-primary-400: #e68f77;
-  --color-primary-500: #dd6a4e;
-  --color-primary-600: #c84b31;
-  --color-primary-700: #a83a27;
-  --color-primary-800: #8a3022;
-  --color-primary-900: #6e281c;
-  
-  --color-secondary-50: #eef5f1;
-  --color-secondary-100: #dce8e2;
-  --color-secondary-200: #bcd1c5;
-  --color-secondary-300: #94b5a3;
-  --color-secondary-400: #6a9780;
-  --color-secondary-500: #4a7d63;
-  --color-secondary-600: #36634d;
-  --color-secondary-700: #2d6a4f;
-  --color-secondary-800: #255440;
-  --color-secondary-900: #1e4434;
-  
-  --color-sky-50: #e8f4f8;
-  --color-sky-100: #cde7f0;
-  --color-sky-200: #9fd2e3;
-  --color-sky-300: #69b5d1;
-  --color-sky-400: #3a95b9;
-  --color-sky-500: #20799e;
-  --color-sky-600: #146082;
-  --color-sky-700: #124d6a;
-  --color-sky-800: #123f57;
-  --color-sky-900: #113448;
-  
-  --color-neutral-50: #faf9f6;
-  --color-neutral-100: #f2efe8;
-  --color-neutral-200: #e5e0d5;
-  --color-neutral-300: #cec8b9;
-  --color-neutral-400: #b0a998;
-  --color-neutral-500: #948d7d;
-  --color-neutral-600: #7a7466;
-  --color-neutral-700: #635d51;
-  --color-neutral-800: #504b42;
-  --color-neutral-900: #423d36;
-  --color-neutral-950: #0f0f0f;
-  
-  /* Custom shadows */
-  --shadow-warm: 0 4px 6px -1px rgba(15, 15, 15, 0.05), 0 10px 15px -3px rgba(15, 15, 15, 0.05);
-  --shadow-warm-lg: 0 10px 15px -3px rgba(15, 15, 15, 0.08), 0 20px 25px -5px rgba(15, 15, 15, 0.05);
-  --shadow-warm-xl: 0 20px 25px -5px rgba(15, 15, 15, 0.1), 0 40px 40px -10px rgba(15, 15, 15, 0.08);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
+
+  /* ─────────────────────────────────────────────
+     Extended Pinterest-inspired color scales
+     ───────────────────────────────────────────── */
+
+  /* Terracotta red (primary) */
+  --color-primary-50:  #FDF3F2;
+  --color-primary-100: #FAE4E2;
+  --color-primary-200: #F4C5C0;
+  --color-primary-300: #EC9D97;
+  --color-primary-400: #E07069;
+  --color-primary-500: #D04B42;
+  --color-primary-600: #C0392B; /* ← base */
+  --color-primary-700: #A12F24;
+  --color-primary-800: #852820;
+  --color-primary-900: #6D241C;
+
+  /* Dusty rose (secondary) */
+  --color-secondary-50:  #FCF2F3;
+  --color-secondary-100: #F9E3E5;
+  --color-secondary-200: #F2C5C9;
+  --color-secondary-300: #E79EA4;
+  --color-secondary-400: #D98088;
+  --color-secondary-500: #CB6570;
+  --color-secondary-600: #C4737A; /* ← base */
+  --color-secondary-700: #A55C63;
+  --color-secondary-800: #894C52;
+  --color-secondary-900: #714044;
+
+  /* Sage green (accent) */
+  --color-sage-50:  #F2F7F2;
+  --color-sage-100: #E0EDE1;
+  --color-sage-200: #C1DCC4;
+  --color-sage-300: #9DC3A1;
+  --color-sage-400: #7AAA7E;
+  --color-sage-500: #7C9A7E; /* ← base */
+  --color-sage-600: #5E8061;
+  --color-sage-700: #4C6950;
+  --color-sage-800: #3E5541;
+  --color-sage-900: #334637;
+
+  /* Warm amber */
+  --color-amber-50:  #FDF5EE;
+  --color-amber-100: #FAE9D5;
+  --color-amber-200: #F5D0A8;
+  --color-amber-300: #EDB272;
+  --color-amber-400: #E29447;
+  --color-amber-500: #D4956A; /* ← base */
+  --color-amber-600: #BA7A4A;
+  --color-amber-700: #9A623B;
+  --color-amber-800: #7E4F31;
+  --color-amber-900: #674129;
+
+  /* Warm cream neutrals */
+  --color-cream-50:  #FAF6F1;
+  --color-cream-100: #F5EDE3;
+  --color-cream-200: #EDE0D0;
+  --color-cream-300: #E0CDB8;
+  --color-cream-400: #CCB49B;
+  --color-cream-500: #B89A80;
+  --color-cream-600: #9A7E65;
+  --color-cream-700: #7A6450;
+  --color-cream-800: #5E4D3D;
+  --color-cream-900: #2C2420;
+
+  /* Warm shadows — richer & deeper than before */
+  --shadow-warm:    0 2px 8px rgba(44,36,32,0.07), 0 4px 16px rgba(44,36,32,0.05);
+  --shadow-warm-lg: 0 6px 20px rgba(44,36,32,0.10), 0 12px 32px rgba(44,36,32,0.07);
+  --shadow-warm-xl: 0 16px 40px rgba(44,36,32,0.13), 0 32px 56px rgba(44,36,32,0.08);
+
+  /* Dusky rose glow for hover/focus states */
+  --shadow-rose:    0 0 0 3px rgba(196,115,122,0.20);
+  --shadow-primary: 0 0 0 3px rgba(192,57,43,0.18);
 }
 
 @layer base {
@@ -231,54 +257,15 @@
     @apply bg-background text-foreground;
   }
 
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
-
   html {
     font-size: var(--font-size);
   }
 
-  h1 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h2 {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h4 {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  label {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  button {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  input {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
-  }
+  h1 { font-size: var(--text-2xl); font-weight: var(--font-weight-medium); line-height: 1.4; }
+  h2 { font-size: var(--text-xl);  font-weight: var(--font-weight-medium); line-height: 1.45; }
+  h3 { font-size: var(--text-lg);  font-weight: var(--font-weight-medium); line-height: 1.5; }
+  h4 { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  label  { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  button { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  input  { font-size: var(--text-base); font-weight: var(--font-weight-normal); line-height: 1.5; }
 }

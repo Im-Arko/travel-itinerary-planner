@@ -6,13 +6,16 @@
 
 @layer base {
   :root {
-    --bg:        #faf9f6;
-    --surface:   #f2efe8;
-    --border:    #e5e0d5;
-    --text:      #3d3830;
-    --muted:     #7d6e54;
-    --primary:   #c84b31;
-    --primary-dark: #a83928;
+    /* Pinterest-inspired warm palette */
+    --bg:           #FAF6F1;
+    --surface:      #F5EDE3;
+    --border:       #E8DFD4;
+    --text:         #2C2420;
+    --muted:        #7A6E65;
+    --primary:      #C0392B;
+    --primary-dark: #A12F24;
+    --rose:         #C4737A;
+    --sage:         #7C9A7E;
   }
 
   html {
@@ -21,7 +24,7 @@
   }
 
   body {
-    @apply bg-sand-50 text-sand-800 font-sans;
+    @apply bg-[#FAF6F1] text-[#2C2420] font-sans;
   }
 
   h1, h2, h3, h4 {
@@ -29,55 +32,172 @@
   }
 
   *:focus-visible {
-    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-sand-50;
+    @apply outline-none ring-2 ring-[#C0392B] ring-offset-2 ring-offset-[#FAF6F1];
   }
 
+  /* Dusty rose selection — very Pinterest */
   ::selection {
-    background: #f5bfb0;
-    color: #3d3830;
+    background: #F2C5C9;
+    color: #2C2420;
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #f2efe8; }
-  ::-webkit-scrollbar-thumb { background: #d4c9b8; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #b8a98e; }
+  /* Warm scrollbar */
+  ::-webkit-scrollbar       { width: 5px; }
+  ::-webkit-scrollbar-track { background: #F5EDE3; }
+  ::-webkit-scrollbar-thumb { background: #D4C4B5; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #B8A898; }
 }
 
 @layer components {
+
+  /* ── Buttons ── */
+
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-500 text-white font-sans font-medium rounded-xl shadow-warm transition-all duration-200 hover:bg-primary-600 active:scale-[0.98] ring-1 ring-white/10 ring-inset;
+    @apply inline-flex items-center justify-center gap-2
+           px-6 py-3
+           bg-[#C0392B] text-white
+           font-sans font-medium rounded-xl
+           shadow-[0_4px_14px_rgba(192,57,43,0.30)]
+           transition-all duration-200
+           hover:bg-[#A12F24]
+           active:scale-[0.98]
+           ring-1 ring-white/10 ring-inset;
   }
 
+  /* Ghost: warm cream outline — for use on dark/photo backgrounds */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent text-white font-sans font-medium rounded-xl border border-white/50 transition-all duration-200 hover:bg-white/10 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2
+           px-6 py-3
+           bg-transparent text-white
+           font-sans font-medium rounded-xl
+           border border-white/50
+           transition-all duration-200
+           hover:bg-white/12
+           active:scale-[0.98];
   }
 
+  /* Outline: terracotta border on cream background */
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent text-primary-500 font-sans font-medium rounded-xl border border-primary-300 transition-all duration-200 hover:bg-primary-50 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2
+           px-5 py-2.5
+           bg-transparent text-[#C0392B]
+           font-sans font-medium rounded-xl text-sm
+           border border-[#EC9D97]
+           transition-all duration-200
+           hover:bg-[#FAF0EE]
+           active:scale-[0.98];
   }
+
+  /* Rose pill — used for interest/tag toggle active states */
+  .btn-rose {
+    @apply inline-flex items-center justify-center gap-2
+           px-4 py-2
+           bg-[#C4737A] text-white
+           font-sans font-medium rounded-full text-sm
+           shadow-[0_2px_8px_rgba(196,115,122,0.30)]
+           transition-all duration-200
+           hover:bg-[#A55C63]
+           active:scale-[0.98];
+  }
+
+  /* ── Cards ── */
 
   .card {
-    @apply bg-white rounded-2xl shadow-warm border border-sand-100 overflow-hidden;
+    @apply bg-white rounded-2xl
+           border border-[#E8DFD4]
+           overflow-hidden
+           shadow-[0_2px_8px_rgba(44,36,32,0.06),_0_4px_16px_rgba(44,36,32,0.04)];
   }
 
+  .card-hover {
+    @apply transition-all duration-300
+           hover:shadow-[0_6px_24px_rgba(44,36,32,0.10),_0_12px_32px_rgba(44,36,32,0.06)]
+           hover:-translate-y-0.5;
+  }
+
+  /* ── Form elements ── */
+
   .input {
-    @apply w-full px-4 py-3 bg-white border border-sand-200 rounded-xl text-sand-800 placeholder:text-sand-400 font-sans text-sm transition-all duration-150 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100;
+    @apply w-full px-4 py-3
+           bg-[#FAF6F1] border border-[#E8DFD4]
+           rounded-xl
+           text-[#2C2420] placeholder:text-[#B0A998]
+           font-sans text-sm
+           transition-all duration-150
+           focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/12;
   }
 
   .label {
-    @apply block text-sm font-medium text-sand-700 mb-1.5;
+    @apply block text-sm font-medium text-[#5E4D3D] mb-1.5 font-sans;
   }
 
+  /* ── Tags ── */
+
+  /* Default: dusty terracotta on blush */
   .tag {
-    @apply inline-flex items-center gap-1 px-3 py-1 bg-primary-50 text-primary-700 text-xs font-medium rounded-full border border-primary-100;
+    @apply inline-flex items-center gap-1
+           px-2.5 py-0.5
+           bg-[#FAF0EE] text-[#C0392B]
+           text-xs font-medium font-sans
+           rounded-full border border-[#F4C5C0];
   }
+
+  /* Rose variant for interests */
+  .tag-rose {
+    @apply inline-flex items-center gap-1
+           px-2.5 py-0.5
+           bg-[#FCF2F3] text-[#C4737A]
+           text-xs font-medium font-sans
+           rounded-full border border-[#F2C5C9];
+  }
+
+  /* Sage variant for nature/climate tags */
+  .tag-sage {
+    @apply inline-flex items-center gap-1
+           px-2.5 py-0.5
+           bg-[#F2F7F2] text-[#4C6950]
+           text-xs font-medium font-sans
+           rounded-full border border-[#C1DCC4];
+  }
+
+  /* ── Typography helpers ── */
 
   .section-title {
-    @apply font-serif text-3xl font-bold text-sand-800 tracking-tight;
+    @apply font-serif text-3xl font-bold text-[#2C2420] tracking-tight;
   }
 
   .section-sub {
-    @apply text-sand-500 font-sans text-base mt-2 leading-relaxed;
+    @apply text-[#7A6E65] font-sans text-base mt-2 leading-relaxed;
+  }
+
+  .page-header {
+    @apply font-serif text-4xl font-bold text-[#2C2420] tracking-tight;
+  }
+
+  .page-sub {
+    @apply text-[#9A8E84] font-sans text-base mt-1.5 leading-relaxed;
+  }
+
+  /* ── Status banners ── */
+
+  .banner-success {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-sans;
+    background: #F2F7F2;
+    border-color: #C1DCC4;
+    color: #4C6950;
+  }
+
+  .banner-error {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-sans;
+    background: #FDF3F2;
+    border-color: #F4C5C0;
+    color: #A12F24;
+  }
+
+  .banner-info {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-sans;
+    background: #FAF6F1;
+    border-color: #E8DFD4;
+    color: #7A6E65;
   }
 }
