@@ -119,7 +119,7 @@ export function HomePage() {
                   className="w-4 h-4 text-primary-300"
                   fill="currentColor"
                 />
-                AI-powered · Vector search · Personalized
+                AI-powered · Personalized
               </div>
 
               <h1

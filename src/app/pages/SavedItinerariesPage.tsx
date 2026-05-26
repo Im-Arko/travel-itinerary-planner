@@ -3,14 +3,20 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Itinerary, itinerariesApi } from '../services/api';
 import { errorMessage } from '../utils/formatters';
-import { Heart, Calendar, MapPin, Star, DollarSign, AlertCircle, Luggage, Wand2, ArrowRight, Sparkles } from 'lucide-react';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+import {
+  Heart, Calendar, MapPin, Star, DollarSign,
+  AlertCircle, Luggage, Wand2, ArrowRight, Trash2,
+} from 'lucide-react';
 
 export function SavedItinerariesPage() {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [isLoading,   setIsLoading]   = useState(true);
+  const [error,       setError]       = useState('');
+  const [deletingId,  setDeletingId]  = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Itinerary | null>(null);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate('/login');
@@ -18,7 +24,6 @@ export function SavedItinerariesPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-
     setIsLoading(true);
     setError('');
     itinerariesApi.list({ limit: 50 })
@@ -29,7 +34,11 @@ export function SavedItinerariesPage() {
 
   const toggleFavorite = async (itinerary: Itinerary) => {
     const previous = itineraries;
-    setItineraries(prev => prev.map(item => item.id === itinerary.id ? { ...item, is_favorite: !item.is_favorite } : item));
+    setItineraries(prev =>
+      prev.map(item =>
+        item.id === itinerary.id ? { ...item, is_favorite: !item.is_favorite } : item
+      )
+    );
     try {
       await itinerariesApi.update(itinerary.id, { is_favorite: !itinerary.is_favorite });
     } catch (err) {
@@ -38,123 +47,253 @@ export function SavedItinerariesPage() {
     }
   };
 
+  const handleDelete = async (itinerary: Itinerary) => {
+    setDeleteTarget(null);
+    setDeletingId(itinerary.id);
+    const previous = itineraries;
+    setItineraries(prev => prev.filter(item => item.id !== itinerary.id));
+    try {
+      await itinerariesApi.remove(itinerary.id);
+    } catch (err) {
+      setItineraries(previous);
+      setError(errorMessage(err, 'Unable to delete itinerary.'));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (loading) return null;
 
+  const favorites = itineraries.filter(i => i.is_favorite).length;
+
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
+    <div className="min-h-[calc(100vh-4rem)] py-12 px-4" style={{ background: '#FAF6F1' }}>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+
+        {/* ── Header ── */}
         <div className="mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-sm font-sans mb-4">
-            <Heart className="w-4 h-4" />
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-sans mb-5 border"
+            style={{ background: '#FCF2F3', borderColor: '#F2C5C9', color: '#C4737A' }}
+          >
+            <Heart className="w-3.5 h-3.5" />
             Your Collection
           </div>
-          <h1 className="font-serif text-4xl font-bold text-sand-800 mb-3">Saved Itineraries</h1>
-          <p className="text-sand-500 font-sans text-lg">Your personalized travel plans, saved and organized.</p>
+          <h1 className="font-serif text-4xl font-bold mb-2" style={{ color: '#2C2420' }}>
+            Saved itineraries
+          </h1>
+          <p className="font-sans text-base" style={{ color: '#9A8E84' }}>
+            Your personalized travel plans, ready whenever you are.
+          </p>
         </div>
 
+        {/* Error */}
         {error && (
-          <div className="mb-6 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-red-700 text-sm">
-            <AlertCircle className="h-4 w-4" />
+          <div className="banner-error mb-6">
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
+        {/* Loading */}
         {isLoading ? (
-          <div className="text-center py-20">
-            <div className="inline-block p-4 bg-sand-100 rounded-full mb-4 animate-pulse">
-              <Calendar className="w-8 h-8 text-sand-400" />
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 animate-pulse"
+              style={{ background: '#F5EDE3' }}>
+              <Calendar className="w-7 h-7" style={{ color: '#C0392B' }} />
             </div>
-            <p className="text-sand-500">Loading your itineraries...</p>
+            <p className="font-sans text-sm" style={{ color: '#9A8E84' }}>
+              Loading your itineraries…
+            </p>
           </div>
         ) : itineraries.length > 0 ? (
           <>
-            {/* Stats bar */}
-            <div className="flex flex-wrap gap-4 mb-8">
-              <div className="bg-white rounded-xl px-5 py-3 shadow-warm border border-sand-100 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-primary-500" />
+            {/* ── Stats ── */}
+            <div className="flex flex-wrap gap-3 mb-10">
+              {/* Total */}
+              <div
+                className="flex items-center gap-3 px-5 py-3 rounded-2xl border"
+                style={{ background: '#FFFFFF', borderColor: '#E8DFD4', boxShadow: '0 2px 8px rgba(44,36,32,0.05)' }}
+              >
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: '#FAF0EE' }}>
+                  <Calendar className="w-4 h-4" style={{ color: '#C0392B' }} />
                 </div>
                 <div>
-                  <p className="text-xs text-sand-400">Total Trips</p>
-                  <p className="font-bold text-sand-800">{itineraries.length}</p>
+                  <p className="text-xs font-sans" style={{ color: '#9A8E84' }}>Total trips</p>
+                  <p className="font-bold font-serif text-lg leading-tight" style={{ color: '#2C2420' }}>
+                    {itineraries.length}
+                  </p>
                 </div>
               </div>
-              <div className="bg-white rounded-xl px-5 py-3 shadow-warm border border-sand-100 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-secondary-50 flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-secondary-500" />
+
+              {/* Favorites */}
+              <div
+                className="flex items-center gap-3 px-5 py-3 rounded-2xl border"
+                style={{ background: '#FFFFFF', borderColor: '#E8DFD4', boxShadow: '0 2px 8px rgba(44,36,32,0.05)' }}
+              >
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: '#FCF2F3' }}>
+                  <Heart className="w-4 h-4" style={{ color: 'white' }} />
                 </div>
                 <div>
-                  <p className="text-xs text-sand-400">Favorites</p>
-                  <p className="font-bold text-sand-800">{itineraries.filter(i => i.is_favorite).length}</p>
+                  <p className="text-xs font-sans" style={{ color: '#9A8E84' }}>Favorites</p>
+                  <p className="font-bold font-serif text-lg leading-tight" style={{ color: '#2C2420' }}>
+                    {favorites}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Itinerary Grid */}
+            {/* Delete modal */}
+            {deleteTarget && (
+              <DeleteConfirmModal
+                title={deleteTarget.title}
+                onConfirm={() => handleDelete(deleteTarget)}
+                onCancel={() => setDeleteTarget(null)}
+                isDeleting={deletingId === deleteTarget.id}
+              />
+            )}
+
+            {/* ── Grid ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {itineraries.map(itinerary => (
                 <Link
                   key={itinerary.id}
                   to={`/itineraries/${itinerary.id}`}
-                  className="group bg-white rounded-2xl shadow-warm hover:shadow-warm-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-sand-100"
+                  className="group block rounded-2xl overflow-hidden border transition-all duration-300"
+                  style={{
+                    background:  '#FFFFFF',
+                    borderColor: '#E8DFD4',
+                    boxShadow:   '0 2px 8px rgba(44,36,32,0.06)',
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 28px rgba(44,36,32,0.12)';
+                    (e.currentTarget as HTMLElement).style.transform  = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(44,36,32,0.06)';
+                    (e.currentTarget as HTMLElement).style.transform  = 'translateY(0)';
+                  }}
                 >
-                  {/* Header with gradient */}
-                  <div className="relative bg-gradient-to-r from-primary-500 to-secondary-500 p-5 text-white">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleFavorite(itinerary);
-                      }}
-                      className="absolute top-3 right-3 p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
-                    >
-                      <Heart className={`w-4 h-4 ${itinerary.is_favorite ? 'fill-white text-white' : 'text-white/70'}`} />
-                    </button>
-                    <h3 className="font-serif text-xl font-bold pr-10">{itinerary.title}</h3>
-                    <p className="text-white/85 text-sm mt-1 line-clamp-1">{itinerary.summary || itinerary.destination_name}</p>
-                  </div>
+                  {/* ── Card header ── */}
+                  <div className="relative p-5" style={{ background: '#852E47' }}>
+                    {/*
+                      FIX: buttons are in their OWN row at the top, title below.
+                      This prevents any overlap regardless of title length.
+                    */}
+                    <div className="flex items-center justify-between mb-3">
+                      {/* Left: destination pill */}
+                      <span
+                        className="inline-flex items-center gap-1 text-xs font-sans px-2.5 py-1 rounded-full"
+                        style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+                      >
+                        <MapPin className="w-3 h-3" />
+                        {itinerary.destination_name}
+                      </span>
 
-                  {/* Body */}
-                  <div className="p-5">
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center gap-2 text-sand-500 text-sm">
-                        <MapPin className="w-4 h-4 text-primary-500" />
-                        <span className="font-medium text-sand-700">{itinerary.destination_name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sand-500 text-sm">
-                        <Calendar className="w-4 h-4 text-primary-500" />
-                        <span>{itinerary.duration_days} days</span>
-                        <span className="text-sand-300">•</span>
-                        <span>{new Date(itinerary.generated_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sand-500 text-sm">
-                        <DollarSign className="w-4 h-4 text-primary-500" />
-                        <span className="capitalize">{itinerary.budget}</span>
+                      {/* Right: action buttons — no overlap possible */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={e => { e.preventDefault(); toggleFavorite(itinerary); }}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+                          style={{ background: 'rgba(255,255,255,0.12)' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(196,115,122,0.40)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
+                          title="Favourite"
+                        >
+                          <Heart
+                            className="w-4 h-4"
+                            style={{
+                              fill:  itinerary.is_favorite ? '#eb3167' : 'transparent',
+                              color: itinerary.is_favorite ? '#ff2161' : 'rgba(255,255,255,0.65)',
+                            }}
+                          />
+                        </button>
+
+                        <button
+                          onClick={e => { e.preventDefault(); setDeleteTarget(itinerary); }}
+                          disabled={deletingId === itinerary.id}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all disabled:opacity-40"
+                          style={{ background: 'rgba(255,255,255,0.12)' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(192,57,43,0.45)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
+                          title="Delete"
+                        >
+                          <Trash2
+                            className={`w-4 h-4 ${deletingId === itinerary.id ? 'animate-pulse' : ''}`}
+                            style={{ color: 'rgba(255,255,255,0.65)' }}
+                          />
+                        </button>
                       </div>
                     </div>
 
-                    {/* Rating & Status */}
-                    <div className="flex items-center justify-between mb-4 pt-3 border-t border-sand-100">
+                    {/* Title — full width, no padding workaround needed */}
+                    <h3 className="font-serif text-xl font-bold text-white leading-snug">
+                      {itinerary.title}
+                    </h3>
+                    {itinerary.summary && (
+                      <p className="text-sm mt-1 line-clamp-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        {itinerary.summary}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* ── Card body ── */}
+                  <div className="p-5">
+                    <div className="space-y-2.5 mb-4">
+                      <div className="flex items-center gap-2 text-sm font-sans">
+                        <Calendar className="w-4 h-4 shrink-0" style={{ color: '#C0392B' }} />
+                        <span style={{ color: '#5E4D3D' }}>
+                          {itinerary.duration_days} days
+                        </span>
+                        <span style={{ color: '#D4C4B5' }}>·</span>
+                        <span style={{ color: '#9A8E84' }}>
+                          {new Date(itinerary.generated_at).toLocaleDateString('en-GB', {
+                            day: 'numeric', month: 'short', year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm font-sans">
+                        <DollarSign className="w-4 h-4 shrink-0" style={{ color: '#C0392B' }} />
+                        <span className="capitalize" style={{ color: '#5E4D3D' }}>
+                          {itinerary.budget}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Rating & status */}
+                    <div
+                      className="flex items-center justify-between pt-3 mb-4 border-t"
+                      style={{ borderColor: '#E8DFD4' }}
+                    >
                       <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
+                        {[1, 2, 3, 4, 5].map(star => (
                           <Star
                             key={star}
-                            className={`w-4 h-4 ${
-                              star <= (itinerary.rating || 0)
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-sand-200'
-                            }`}
+                            className="w-3.5 h-3.5"
+                            style={{
+                              fill:  star <= (itinerary.rating || 0) ? '#D4956A' : 'transparent',
+                              color: star <= (itinerary.rating || 0) ? '#D4956A' : '#E8DFD4',
+                            }}
                           />
                         ))}
                       </div>
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-sand-100 text-sand-600 capitalize">
+                      <span
+                        className="text-xs font-medium font-sans px-2.5 py-1 rounded-full capitalize border"
+                        style={{ background: '#FAF6F1', borderColor: '#E8DFD4', color: '#7A6E65' }}
+                      >
                         {itinerary.status}
                       </span>
                     </div>
 
-                    {/* View button */}
-                    <div className="flex items-center text-primary-500 text-sm font-medium group-hover:gap-2 gap-1 transition-all">
-                      View Details <ArrowRight className="w-4 h-4" />
+                    {/* CTA */}
+                    <div
+                      className="flex items-center text-sm font-medium font-sans gap-1 transition-all duration-200 group-hover:gap-2"
+                      style={{ color: '#C0392B' }}
+                    >
+                      View details <ArrowRight className="w-4 h-4" />
                     </div>
                   </div>
                 </Link>
@@ -162,57 +301,77 @@ export function SavedItinerariesPage() {
             </div>
           </>
         ) : (
-          <div className="text-center py-20 px-6">
-            {/* Illustrated empty state with suitcase */}
-            <div className="relative inline-block mb-8">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center mx-auto">
-                <div className="relative">
-                  <Luggage className="w-16 h-16 text-primary-400" />
-                  {/* Decorative sparkles */}
-                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary-200 flex items-center justify-center">
-                    <Star className="w-3 h-3 text-primary-500 fill-primary-500" />
-                  </div>
-                  <div className="absolute -bottom-1 -left-3 w-4 h-4 rounded-full bg-secondary-200" />
-                </div>
+          /* ── Empty state ── */
+          <div className="flex flex-col items-center justify-center py-28 px-6 text-center">
+            <div className="relative mb-10">
+              <div
+                className="w-28 h-28 rounded-3xl flex items-center justify-center mx-auto"
+                style={{ background: '#FAF0EE', border: '1px solid #F4C5C0' }}
+              >
+                <Luggage className="w-12 h-12" style={{ color: '#C0392B' }} />
               </div>
-              {/* Dotted path decoration */}
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                <div className="w-2 h-2 rounded-full bg-sand-200" />
-                <div className="w-2 h-2 rounded-full bg-sand-300" />
-                <div className="w-2 h-2 rounded-full bg-sand-200" />
-                <div className="w-2 h-2 rounded-full bg-sand-300" />
-                <div className="w-2 h-2 rounded-full bg-sand-200" />
+              {/* Floating rose dot */}
+              <div
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center"
+                style={{ background: '#FCF2F3', border: '1px solid #F2C5C9' }}
+              >
+                <Star className="w-3 h-3" style={{ fill: '#C4737A', color: '#C4737A' }} />
+              </div>
+              {/* Sage dot */}
+              <div
+                className="absolute -bottom-1 -left-2 w-4 h-4 rounded-full"
+                style={{ background: '#C1DCC4' }}
+              />
+              {/* Dotted path */}
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: i % 2 === 0 ? '#E8DFD4' : '#D4C4B5' }}
+                  />
+                ))}
               </div>
             </div>
 
-            <h3 className="font-serif text-2xl font-semibold text-sand-800 mb-3">Your next adventure awaits</h3>
-            <p className="text-sand-500 font-sans text-base mb-8 max-w-md mx-auto leading-relaxed">
-              Your saved itineraries will appear here. Generate your first personalized trip and start collecting memories.
+            <h3 className="font-serif text-2xl font-semibold mb-3" style={{ color: '#2C2420' }}>
+              Your next adventure awaits
+            </h3>
+            <p className="font-sans text-base mb-8 max-w-xs leading-relaxed" style={{ color: '#9A8E84' }}>
+              Generate your first personalized itinerary and it'll live here, ready whenever you are.
             </p>
 
             <Link
               to="/generate"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-2xl font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all shadow-warm-lg ring-1 ring-white/20 ring-inset group"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold font-sans text-white transition-all group"
+              style={{
+                background:  '#C0392B',
+                boxShadow:   '0 4px 16px rgba(192,57,43,0.30)',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#A12F24')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#C0392B')}
             >
               <Wand2 className="w-5 h-5" />
-              Generate Your First Itinerary
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              Generate your first trip
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
 
-            {/* Feature highlights */}
-            <div className="mt-10 flex flex-wrap justify-center gap-4 text-sm text-sand-400">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-400" />
-                AI-powered recommendations
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary-400" />
-                Vector similarity search
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                Personalized for you
-              </span>
+            {/* Feature pills */}
+            <div className="mt-10 flex flex-wrap justify-center gap-3">
+              {[
+                { label: 'AI-powered',          color: '#C0392B', bg: '#FAF0EE' },
+                //{ label: 'Vector search',        color: '#4C6950', bg: '#F2F7F2' },
+                { label: 'Personalized for you', color: '#C4737A', bg: '#FCF2F3' },
+              ].map(({ label, color, bg }) => (
+                <span
+                  key={label}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans border"
+                  style={{ background: bg, color, borderColor: color + '33' }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+                  {label}
+                </span>
+              ))}
             </div>
           </div>
         )}
