@@ -101,11 +101,21 @@ export function LoginPage() {
                 </button>
               </div>
             </div>
-
+             
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full py-3.5 text-base rounded-xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-primary w-full py-3.5 text-base rounded-xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed
+              
+                        group inline-flex items-center justify-center gap-2
+                         bg-primary-500
+                        px-5  font-semibold text-white
+                        shadow-warm-xl
+                        transition-all duration-300
+                        hover:bg-primary-600
+                        hover:-translate-y-1
+                        hover:shadow-2xl
+                      "
             >
               {isLoading ? 'Signing in…' : 'Sign in'}
             </button>
