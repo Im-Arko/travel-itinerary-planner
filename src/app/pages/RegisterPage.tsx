@@ -90,7 +90,7 @@ export function RegisterPage() {
                   id="fullName"
                   type="text"
                   required
-                  placeholder="Arko Banerjee"
+                  placeholder="Malcolm Todd"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                   className="input pl-10"
@@ -106,7 +106,7 @@ export function RegisterPage() {
                   id="username"
                   type="text"
                   required
-                  placeholder="arkob"
+                  placeholder="wholesomerockstar"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   className="input pl-10"
