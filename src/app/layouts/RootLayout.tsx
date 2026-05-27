@@ -36,7 +36,7 @@ export function RootLayout() {
               <Plane className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <span className="font-serif text-xl font-bold text-sand-800 italic">
-              Travel<span className="text-primary-500 not-italic">AI</span>
+              Travellant
             </span>
           </Link>
 
@@ -169,10 +169,10 @@ export function RootLayout() {
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Plane className="w-4 h-4 text-primary-400" />
-            <span className="font-serif italic text-sand-400 text-sm">TravelAI</span>
+            <span className="font-serif italic text-sand-400 text-sm">TRAVELLANT</span>
           </div>
           <p className="text-xs text-sand-400">
-            © {new Date().getFullYear()} TravelAI · Personalized adventures, powered by AI
+            © {new Date().getFullYear()} TRAVELLANT · Personalized adventures, powered by AI
           </p>
         </div>
       </footer>

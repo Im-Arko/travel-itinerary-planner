@@ -50,7 +50,7 @@ export function RegisterPage() {
         </div>
         <div className="absolute bottom-10 left-12 flex items-center gap-2">
           <Plane className="w-5 h-5 text-white/70" />
-          <span className="font-serif text-white/70 italic text-lg">TravelAI</span>
+          <span className="font-serif text-white/70 italic text-lg">TRAVELLANT</span>
         </div>
       </div>
 
@@ -61,7 +61,7 @@ export function RegisterPage() {
             <Plane className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
           <span className="font-serif text-2xl font-bold text-sand-800 italic">
-            Travel<span className="text-primary-500 not-italic">AI</span>
+            Travellant
           </span>
         </Link>
 
