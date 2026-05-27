@@ -33,7 +33,11 @@ export function RootLayout() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group shrink-0">
             <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-warm-sm group-hover:bg-primary-600 transition-colors">
-              <Plane className="w-4 h-4 text-white" strokeWidth={2.5} />
+              <img
+                src="/src/assets/favicon.png"
+                alt="Logo"
+                className="w-7 h-7 object-contain"
+              />
             </div>
             <span className="font-serif text-xl font-bold text-sand-800 italic">
               Travellant

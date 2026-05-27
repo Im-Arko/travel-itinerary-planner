@@ -58,7 +58,11 @@ export function RegisterPage() {
       <div className="flex flex-col items-center justify-center px-8 py-16 bg-sand-50">
         <Link to="/" className="flex items-center gap-2 mb-12 group">
           <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center shadow-warm">
-            <Plane className="w-4 h-4 text-white" strokeWidth={2.5} />
+            <img
+              src="/src/assets/favicon.png"
+              alt="Logo"
+              className="w-7 h-7 object-contain"
+            />
           </div>
           <span className="font-serif text-2xl font-bold text-sand-800 italic">
             Travellant
