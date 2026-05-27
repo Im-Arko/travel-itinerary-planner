@@ -34,7 +34,7 @@ export function RootLayout() {
           <Link to="/" className="flex items-center gap-2 group shrink-0">
             <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-warm-sm group-hover:bg-primary-600 transition-colors">
               <img
-                src="/src/assets/favicon.png"
+                src="/favicon.png"
                 alt="Logo"
                 className="w-7 h-7 object-contain"
               />

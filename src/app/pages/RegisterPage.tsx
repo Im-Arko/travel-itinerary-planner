@@ -59,7 +59,7 @@ export function RegisterPage() {
         <Link to="/" className="flex items-center gap-2 mb-12 group">
           <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center shadow-warm">
             <img
-              src="/src/assets/favicon.png"
+              src="/favicon.png"
               alt="Logo"
               className="w-7 h-7 object-contain"
             />
