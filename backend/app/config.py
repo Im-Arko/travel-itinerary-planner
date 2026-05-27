@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     )
 
     # Database
-    db_host: str = "localhost"
+    db_host: str = ""
     db_port: int = 3306
-    db_name: str = "travel_app"
-    db_user: str = "travel_user"
+    db_name: str = ""
+    db_user: str = ""
     db_password: str = ""
 
     # Security
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
 
     # App
     app_env: str = "development"
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,https://travellant-front.onrender.com/"
 
     @property
     def database_url(self) -> str:
