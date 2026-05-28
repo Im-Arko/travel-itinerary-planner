@@ -1,26 +1,26 @@
-version: '3.9'
-
 services:
-  # ── MariaDB ─────────────────────────────────────────────────
-  db:
-    image: mariadb:11.4
-    container_name: travel_db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE:      travel_app
-      MYSQL_USER:          travel_user
-      MYSQL_PASSWORD:      your_secure_password
-    ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # # ── MariaDB ─────────────────────────────────────────────────
+  # db:
+  #   image: mariadb:11.4
+  #   container_name: travel_db
+  #   restart: unless-stopped
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+  #     MYSQL_DATABASE: ${MYSQL_DATABASE:-travel_app}
+  #     MYSQL_USER: ${MYSQL_USER:-travel_user}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-your_secure_password}
+  #   ports:
+  #     - "${DB_PORT:-3306}:3306"
+  #   volumes:
+  #     - db_data:/var/lib/mysql
+  #     - ./app/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+  #   healthcheck:
+  #     test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - travel-network
 
   # ── FastAPI Backend ──────────────────────────────────────────
   backend:
@@ -29,36 +29,31 @@ services:
       dockerfile: Dockerfile
     container_name: travel_api
     restart: unless-stopped
-    env_file: ./backend/.env
+    env_file: ./.env.docker
     environment:
-      DB_HOST: db
-      DB_PORT: 3306
+      # DB_HOST: ${DB_HOST}
+      # DB_PORT: ${DB_PORT}
+      # DB_NAME: ${DB_NAME}
+      # DB_USER: ${DB_USER}
+      # DB_PASSWORD: ${DB_PASSWORD}
+      CHROMA_PERSIST_DIR: /app/chroma_db
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     volumes:
-      - ./backend:/app
       - chroma_data:/app/chroma_db
-    depends_on:
-      db:
-        condition: service_healthy
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-  # ── React Frontend ───────────────────────────────────────────
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: travel_ui
-    restart: unless-stopped
-    environment:
-      REACT_APP_API_URL: http://localhost:8000
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend/src:/app/src
-    depends_on:
-      - backend
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    # networks:
+    #   - travel-network
 
 volumes:
-  db_data:
+  # db_data:
+  #   driver: local
   chroma_data:
+    driver: local
+
+# networks:
+#   travel-network:
+#     driver: bridge

@@ -46,3 +46,4 @@ backend/chroma_db/
 backend/.env
 replacements.txt
 travellant.sql
+backend/.env.docker
