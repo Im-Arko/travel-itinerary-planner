@@ -4,8 +4,11 @@ Travel Itinerary API
 FastAPI backend with LangChain + ChromaDB for personalised
 AI-generated travel itineraries.
 """
+print("STARTING MAIN")
 
 from fastapi import FastAPI, Depends
+print("FASTAPI IMPORTED")
+
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -49,6 +52,7 @@ travel itineraries based on your preferences.
     contact      = {"name": "Travel App Team"},
     swagger_ui_parameters={"docExpansion": "none"},
 )
+print("APP CREATED")
 
 # ── CORS ────────────────────────────────────────────────────────
 
@@ -92,7 +96,7 @@ def root():
         "docs":    "/docs",
         "redoc":   "/redoc",
     }
-
+print("ROUTES REGISTERED")
 
 # ── Startup ─────────────────────────────────────────────────────
 
