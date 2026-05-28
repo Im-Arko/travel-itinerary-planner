@@ -88,7 +88,7 @@ export const errorMessage = (error: unknown, fallback: string) => {
     return response?.data?.detail || fallback;
   }
   if (error instanceof TypeError) {
-    return `${fallback} Check that the backend is running and reachable from the browser.`;
+    return `${fallback} Network error.`;
   }
   return fallback;
 };

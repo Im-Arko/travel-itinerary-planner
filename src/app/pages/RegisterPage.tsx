@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { errorMessage } from '../utils/formatters';
 import { Mail, Lock, User, UserCircle, Plane, Eye, EyeOff } from 'lucide-react';
-
 const BG =
   'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1400&q=80&auto=format&fit=crop';
 
@@ -49,7 +48,11 @@ export function RegisterPage() {
           <p className="font-sans text-sm text-white/55 mt-4">— J.R.R. Tolkien</p>
         </div>
         <div className="absolute bottom-10 left-12 flex items-center gap-2">
-          <Plane className="w-5 h-5 text-white/70" />
+          
+          <img
+            src="/TravellerSVG.svg"
+            className="w-15 h-15  text-white/70 "
+          />
           <span className="font-serif text-white/70 italic text-lg">TRAVELLANT</span>
         </div>
       </div>

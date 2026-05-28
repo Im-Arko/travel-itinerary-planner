@@ -172,7 +172,11 @@ export function RootLayout() {
       <footer className="border-t border-sand-100 bg-white">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Plane className="w-4 h-4 text-primary-400" />
+            <img
+              src="/favicon.png"
+              alt="Logo"
+              className="w-6 h-6 object-contain"
+            />
             <span className="font-serif italic text-sand-400 text-sm">TRAVELLANT</span>
           </div>
           <p className="text-xs text-sand-400">
