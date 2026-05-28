@@ -23,7 +23,7 @@ from .routers import auth, preferences, destinations, itineraries
 settings = get_settings()
 
 # Create database tables
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 # ── App ────────────────────────────────────────────────────────
 
 app = FastAPI(
