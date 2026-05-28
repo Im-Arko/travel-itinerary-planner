@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Database
     db_host: str = ""
-    db_port: int = 3306
+    db_port: int = 32860
     db_name: str = ""
     db_user: str = ""
     db_password: str = ""
