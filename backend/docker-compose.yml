@@ -25,7 +25,7 @@ services:
   # ── FastAPI Backend ──────────────────────────────────────────
   backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     container_name: travel_api
     restart: unless-stopped
