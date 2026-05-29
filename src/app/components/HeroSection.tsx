@@ -52,7 +52,7 @@ export function HeroSection() {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="text-lg md:text-xl text-white/80 mb-12 max-w-3xl mx-auto"
           >
-            Powered by advanced AI and vector similarity search, we craft personalized travel experiences
+            Powered by advanced AI and semantic search, we craft personalized travel experiences
             that match your unique preferences and dreams.
           </motion.p>
 

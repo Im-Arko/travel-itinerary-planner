@@ -124,7 +124,7 @@ export function GenerateItineraryPage() {
           </div>
           <h1 className="font-serif text-4xl font-bold text-sand-800 mb-3">Generate Your Itinerary</h1>
           <p className="text-sand-500 font-sans text-lg max-w-2xl mx-auto">
-            Find your next adventure with personalized itineraries crafted by advanced AI and vector similarity search.
+            Find your next adventure with personalized itineraries crafted by advanced AI and semantic search.
           </p>
         </div>
 
