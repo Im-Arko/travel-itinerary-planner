@@ -60,11 +60,17 @@ export function RegisterPage() {
       {/* ── Right: form ── */}
       <div className="flex flex-col items-center justify-center px-8 py-16 bg-sand-50">
         <Link to="/" className="flex items-center gap-2 mb-12 group">
-          <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center shadow-warm">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center">
             <img
               src="/favicon.png"
               alt="Logo"
-              className="w-7 h-7 object-contain"
+              className="
+                relative z-10
+                w-7 h-7 object-contain
+                transition-all duration-300
+                [filter:drop-shadow(0_0_8px_#D04B42)]
+                hover:[filter:drop-shadow(0_0_16px_#D04B42)]
+                "
             />
           </div>
           <span className="font-serif text-2xl font-bold text-sand-800 italic">

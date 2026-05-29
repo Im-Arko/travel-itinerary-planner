@@ -48,10 +48,12 @@ export function RootLayout() {
     className="
       relative z-10
       w-7 h-7 object-contain
-      drop-shadow-[0_0_10px_rgba(99,102,241,0.7)]
-    "
+      transition-all duration-300
+      [filter:drop-shadow(0_0_8px_#D04B42)]
+      hover:[filter:drop-shadow(0_0_16px_#D04B42)]
+      "
   />
-</div>  
+</div>
             <span className="font-serif text-xl font-bold text-sand-800 italic">
               Travellant
             </span>
@@ -201,8 +203,10 @@ export function RootLayout() {
     className="
       relative z-10
       w-7 h-7 object-contain
-      drop-shadow-[0_0_10px_rgba(99,102,241,0.7)]
-    "
+      transition-all duration-300
+      [filter:drop-shadow(0_0_8px_#D04B42)]
+      hover:[filter:drop-shadow(0_0_16px_#D04B42)]
+      "
   />
 </div>
           <p className="text-xs text-sand-400">
