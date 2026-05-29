@@ -102,6 +102,8 @@ def ingest_destinations(db: Session, destination_ids: Optional[List[int]] = None
     ]
 
     embeddings = embedder.encode(texts, show_progress_bar=False).tolist()
+    
+    collection = _get_collection()
 
     collection.upsert(
         ids        = ids,
@@ -132,9 +134,9 @@ def semantic_search(
     Encode query and find semantically similar destinations.
     Returns list of {destination_id, name, country, score, document}.
     """
-    collection = _get_collection()
-    embedder   = _get_embedder()\
+    embedder   = _get_embedder()
     
+    collection = _get_collection()
     if collection.count() == 0:
         logger.warning("Semantic search requested with an empty vector collection")
         return []
@@ -183,7 +185,6 @@ def semantic_search(
             "score":          round(score, 4),
             "document":       documents[0][i],
         })
-    collection = _get_collection()
     
 
     return output
