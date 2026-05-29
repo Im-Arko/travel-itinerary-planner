@@ -18,7 +18,7 @@ const interestEmojis: Record<string, string> = {
 
 const travelStyles  = ['solo', 'couple', 'family', 'adventure', 'cultural', 'relaxation', 'luxury', 'budget'];
 const budgetRanges  = [
-  { value: 'budget',   label: 'Budget',   sub: 'Affordable adventures' },
+  { value: 'budget',   label: 'Low',   sub: 'Affordable adventures' },
   { value: 'moderate', label: 'Moderate', sub: 'Best of both worlds'   },
   { value: 'luxury',   label: 'Luxury',   sub: 'No compromises'        },
 ];

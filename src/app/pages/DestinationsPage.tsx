@@ -168,7 +168,7 @@ export function DestinationsPage() {
                 className="pl-8 pr-7 py-2.5 bg-sand-50 border border-sand-200 rounded-lg text-sm text-sand-700 font-sans appearance-none cursor-pointer focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
               >
                 <option value="all">All Budgets</option>
-                <option value="budget">Budget</option>
+                <option value="budget">Low</option>
                 <option value="moderate">Moderate</option>
                 <option value="luxury">Luxury</option>
               </select>

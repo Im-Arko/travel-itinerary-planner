@@ -94,7 +94,7 @@ export const errorMessage = (error: unknown, fallback: string) => {
 };
 
 export const normalizeBudget = (value: string | null | undefined) => {
-  if (value === 'low' || value === 'Budget ($500-1500)' || value === 'budget') return 'budget';
+  if (value === 'low' || value === 'Low ($500-1500)' || value === 'budget') return 'budget';
   if (value === 'medium' || value === 'Moderate ($1500-3000)' || value === 'moderate') return 'moderate';
   if (value === 'high' || value === 'Luxury ($3000+)' || value === 'luxury') return 'luxury';
   return 'moderate';

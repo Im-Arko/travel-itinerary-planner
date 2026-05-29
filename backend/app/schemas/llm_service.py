@@ -78,7 +78,7 @@ recommendations, and accommodation types. Costs should be realistic for the dest
 ITINERARY_PROMPT = """Create a personalised {duration}-day travel itinerary for {destination}.
 
 TRAVELLER PROFILE:
-- Budget level: {budget} (budget=<$100/day, moderate=$100-300/day, luxury=$300+/day)
+- Budget level: {budget} (low=<$100/day, moderate=$100-300/day, luxury=$300+/day)
 - Travel style: {travel_style}
 - Climate preference: {climate}
 - Destination type preference: {dest_type}
