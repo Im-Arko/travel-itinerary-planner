@@ -123,8 +123,7 @@ def seed(clear_existing: bool = False):
             print(f"✅ Inserted {len(DESTINATIONS)} destinations.\n")
 
         print("🔍 Ingesting into ChromaDB vector store...")
-        ids = vector_store.ingest_destinations(db)
-        count = len(ids)
+        count = vector_store.ingest_destinations(db)
         print(f"✅ Ingested {count} destinations into ChromaDB.")
         print("\n🎉 All done! Refresh your app to see all destinations.")
 
