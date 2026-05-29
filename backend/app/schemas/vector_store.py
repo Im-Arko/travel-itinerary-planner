@@ -83,10 +83,7 @@ def ingest_destinations(db: Session, destination_ids: Optional[List[int]] = None
     if not destinations:
         return 0
 
-    collection = _get_collection()
-    if collection.count() == 0:
-        logger.warning("Semantic search requested with an empty vector collection")
-        return 0
+    
 
     embedder   = _get_embedder()
 
@@ -136,8 +133,11 @@ def semantic_search(
     Returns list of {destination_id, name, country, score, document}.
     """
     collection = _get_collection()
-    embedder   = _get_embedder()
-
+    embedder   = _get_embedder()\
+    
+    if collection.count() == 0:
+        logger.warning("Semantic search requested with an empty vector collection")
+        return []
     # Build ChromaDB where clause
     where_clauses = []
     if budget_filter and budget_filter != "any":
@@ -183,8 +183,11 @@ def semantic_search(
             "score":          round(score, 4),
             "document":       documents[0][i],
         })
+    collection = _get_collection()
+    
 
     return output
+
 
 
 def collection_count() -> int:

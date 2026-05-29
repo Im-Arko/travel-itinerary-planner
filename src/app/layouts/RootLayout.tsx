@@ -108,7 +108,7 @@ export function RootLayout() {
                 >
                   Login
                 </Link>
-                <Link to="/register" className="btn-primary text-sm py-2 px-5">
+                <Link to="/register" className="btn-primary text-sm py-2 px-5 ">
                   Get Started
                 </Link>
               </>

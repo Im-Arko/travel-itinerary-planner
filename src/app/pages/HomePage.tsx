@@ -480,33 +480,34 @@ export function HomePage() {
 
             <div className="flex items-center justify-center">
               <Link
-                to="/register"
-                className="
-                  group relative inline-flex items-center justify-center gap-2
-                  overflow-hidden rounded-2xl
-                  border border-terracotta-500
-                  bg-terracotta-500 px-7 py-3.5
-                  text-sm font-semibold text-sand-50
-                  shadow-warm-xl
-                  transition-all duration-300
-                  hover:-translate-y-1 hover:shadow-2xl
-                "
-              >
-                <span
-                  className="
-                    absolute inset-0
-                    -translate-x-full skew-x-12
-                    bg-white/20
-                    transition-transform duration-700
-                    group-hover:translate-x-[180%]
-                  "
-                />
+                      to="/register"
+                      className="
+                        group relative inline-flex items-center justify-center gap-2
+                        overflow-hidden rounded-2xl
+                        border border-primary-400
+                        bg-[#fd5e52] px-6 py-3.5
+                        text-sm font-semibold text-white
+                        shadow-warm-xl
+                        transition-all duration-300
+                        hover:-translate-y-1
+                        hover:shadow-2xl
+                      "
+                    >
+                      <span
+                        className="
+                          absolute inset-0
+                          -translate-x-full skew-x-12
+                          bg-white/20
+                          transition-transform duration-700
+                          group-hover:translate-x-[180%]
+                        "
+                      />
 
-                <span className="relative z-10 flex items-center gap-2">
-                  Create Free Account
-                  <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                </span>
-              </Link>
+                      <span className="relative z-10 flex items-center gap-2">
+                        Create Free Account
+                        <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                      </span>
+                    </Link>
             </div>
           </div>
         </section>
