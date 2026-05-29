@@ -32,13 +32,26 @@ export function RootLayout() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group shrink-0">
-            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-warm-sm group-hover:bg-primary-600 transition-colors">
+            {/* <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-warm-sm group-hover:bg-primary-600 transition-colors">
               <img
                 src="/favicon.png"
                 alt="Logo"
                 className="w-7 h-7 object-contain"
               />
-            </div>
+            </div> */}
+            <div className="relative w-8 h-8 flex items-center justify-center">
+  <div className="absolute inset-0 bg-primary-500/20 blur-md rounded-full" />
+
+  <img
+    src="/favicon.png"
+    alt="Logo"
+    className="
+      relative z-10
+      w-7 h-7 object-contain
+      drop-shadow-[0_0_10px_rgba(99,102,241,0.7)]
+    "
+  />
+</div>  
             <span className="font-serif text-xl font-bold text-sand-800 italic">
               Travellant
             </span>
@@ -171,14 +184,27 @@ export function RootLayout() {
       {/* ── Footer ── */}
       <footer className="border-t border-sand-100 bg-white">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <img
               src="/favicon.png"
               alt="Logo"
               className="w-6 h-6 object-contain"
             />
             <span className="font-serif italic text-sand-400 text-sm">TRAVELLANT</span>
-          </div>
+          </div> */}
+          <div className="relative w-8 h-8 flex items-center justify-center">
+  <div className="absolute inset-0 bg-primary-500/20 blur-md rounded-full" />
+
+  <img
+    src="/favicon.png"
+    alt="Logo"
+    className="
+      relative z-10
+      w-7 h-7 object-contain
+      drop-shadow-[0_0_10px_rgba(99,102,241,0.7)]
+    "
+  />
+</div>
           <p className="text-xs text-sand-400">
             © {new Date().getFullYear()} TRAVELLANT · Personalized adventures, powered by AI
           </p>

@@ -269,15 +269,13 @@ export function HomePage() {
             <div className="hidden lg:block relative">
               <div className="relative">
                 {/* Timeline */}
-                <div
-                  className="
-                    absolute left-8 top-0 bottom-0 w-0.5
-                    bg-gradient-to-b
-                    from-primary-300
-                    via-primary-400
-                    to-primary-500
-                  "
-                />
+                  <div className="absolute left-8 top-0 bottom-3 w-0.5 flex flex-col">
+                    {/* solid part */}
+                    <div className="flex-1 bg-gradient-to-b from-primary-300 via-primary-400 to-primary-500" />
+
+                    {/* dotted bottom */}
+                    <div className="h-20 border-l-5 border-dotted border-primary-500/60" />
+                  </div>
 
                 <div className="space-y-5">
                   {previewDays.map((day, idx) => (

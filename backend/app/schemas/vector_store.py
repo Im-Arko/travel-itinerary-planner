@@ -86,7 +86,7 @@ def ingest_destinations(db: Session, destination_ids: Optional[List[int]] = None
     collection = _get_collection()
     if collection.count() == 0:
         logger.warning("Semantic search requested with an empty vector collection")
-        return []
+        return 0
 
     embedder   = _get_embedder()
 
