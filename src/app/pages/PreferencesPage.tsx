@@ -169,7 +169,7 @@ export function PreferencesPage() {
               <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#C1DCC4' }}>
                 <CheckCircle className="w-4 h-4" />
               </div>
-              <span className="font-medium">Preferences saved — your next trip will feel even more personal.</span>
+              <span className="font-medium">Preferences saved, your next trip will feel even more personal.</span>
             </div>
           )}
 
@@ -303,7 +303,7 @@ export function PreferencesPage() {
             </div>
           </Section>
 
-          {/* ── Interests — dusty rose active (very Pinterest) ── */}
+          {/* ── Interests, dusty rose active (very Pinterest) ── */}
           <Section icon={Heart} title="Your interests" hint="(select all that apply)">
             <div className="flex flex-wrap gap-2">
               {interestOptions.map(interest => {

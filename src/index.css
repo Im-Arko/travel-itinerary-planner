@@ -35,7 +35,7 @@
     @apply outline-none ring-2 ring-[#C0392B] ring-offset-2 ring-offset-[#FAF6F1];
   }
 
-  /* Dusty rose selection — very Pinterest */
+  /* Dusty rose selection, very Pinterest */
   ::selection {
     background: #F2C5C9;
     color: #2C2420;
@@ -64,7 +64,7 @@
            ring-1 ring-white/10 ring-inset;
   }
 
-  /* Ghost: warm cream outline — for use on dark/photo backgrounds */
+  /* Ghost: warm cream outline, for use on dark/photo backgrounds */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2
            px-6 py-3
@@ -88,7 +88,7 @@
            active:scale-[0.98];
   }
 
-  /* Rose pill — used for interest/tag toggle active states */
+  /* Rose pill, used for interest/tag toggle active states */
   .btn-rose {
     @apply inline-flex items-center justify-center gap-2
            px-4 py-2

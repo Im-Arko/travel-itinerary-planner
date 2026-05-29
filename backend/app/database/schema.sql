@@ -141,7 +141,7 @@ INSERT INTO destinations (name, country, continent, description, climate_type, d
  'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800', -8.409518, 115.188919),
 
 ('Santorini', 'Greece', 'Europe',
- 'Santorini is the crown jewel of the Aegean Sea — a crescent-shaped volcanic island with iconic white-washed buildings and blue-domed churches perched on dramatic cliffs. Famous for spectacular sunsets over the caldera, fine wines from volcanic-soil vineyards, and crystal-clear waters. A luxury honeymoon and couples destination par excellence.',
+ 'Santorini is the crown jewel of the Aegean Sea, a crescent-shaped volcanic island with iconic white-washed buildings and blue-domed churches perched on dramatic cliffs. Famous for spectacular sunsets over the caldera, fine wines from volcanic-soil vineyards, and crystal-clear waters. A luxury honeymoon and couples destination par excellence.',
  'mediterranean', 'beach', 'luxury', 'June,July,August,September', 25.5,
  '["sunsets","luxury","romance","wine","sailing","cliffs","photography","honeymoon"]',
  'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800', 36.393155, 25.461509),
@@ -153,7 +153,7 @@ INSERT INTO destinations (name, country, continent, description, climate_type, d
  'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800', -51.623157, -72.705727),
 
 ('Kyoto', 'Japan', 'Asia',
- 'Kyoto was Japan''s imperial capital for over a millennium and preserves an extraordinary concentration of temples, shrines, geisha districts and traditional wooden machiya townhouses. Cherry blossom season transforms the city into a dreamscape. The cuisine—kaiseki multi-course dining, matcha sweets, and ramen—is world-class. An unmissable cultural immersion.',
+ 'Kyoto was Japan''s imperial capital for over a millennium and preserves an extraordinary concentration of temples, shrines, geisha districts and traditional wooden machiya townhouses. Cherry blossom season transforms the city into a dreamscape. The cuisine, kaiseki multi-course dining, matcha sweets, and ramen, is world-class. An unmissable cultural immersion.',
  'temperate', 'cultural', 'moderate', 'March,April,May,October,November', 15.0,
  '["temples","cherry blossoms","geisha","cuisine","history","gardens","tea ceremony","anime"]',
  'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800', 35.011636, 135.768029),
@@ -177,13 +177,13 @@ INSERT INTO destinations (name, country, continent, description, climate_type, d
  'https://images.unsplash.com/photo-1534445867742-43195f401b6c?w=800', 40.633333, 14.600000),
 
 ('Chiang Mai', 'Thailand', 'Asia',
- 'Chiang Mai is Thailand''s cultural capital—a walled old city surrounded by a moat and dotted with over 300 ancient temples. The surrounding mountains host hill-tribe villages, elephant sanctuaries, and spectacular trekking. Famous for its Sunday Walking Street, lantern festival, and exceptional street food. An incredibly affordable base for exploring Northern Thailand.',
+ 'Chiang Mai is Thailand''s cultural capital, a walled old city surrounded by a moat and dotted with over 300 ancient temples. The surrounding mountains host hill-tribe villages, elephant sanctuaries, and spectacular trekking. Famous for its Sunday Walking Street, lantern festival, and exceptional street food. An incredibly affordable base for exploring Northern Thailand.',
  'tropical', 'cultural', 'budget', 'November,December,January,February,March', 26.0,
  '["temples","elephants","trekking","street food","markets","budget-friendly","culture","wellness"]',
  'https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?w=800', 18.796143, 98.978760),
 
 ('Queenstown', 'New Zealand', 'Oceania',
- 'Queenstown is the adventure capital of the world, set on the shores of Lake Wakatipu and ringed by the Remarkables mountain range. Bungee jumping was invented here, and the options for adrenaline activities are endless—skydiving, jet boating, white-water rafting, paragliding. In winter, world-class ski resorts are minutes away. The scenery is Lord of the Rings-level epic.',
+ 'Queenstown is the adventure capital of the world, set on the shores of Lake Wakatipu and ringed by the Remarkables mountain range. Bungee jumping was invented here, and the options for adrenaline activities are endless. Skydiving, jet boating, white-water rafting, paragliding. In winter, world-class ski resorts are minutes away. The scenery is Lord of the Rings-level epic.',
  'temperate', 'adventure', 'moderate', 'June,July,August,December,January,February', 12.0,
  '["bungee jumping","skiing","adventure","wine","fjords","hiking","skydiving","LOTR"]',
  'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=800', -45.031162, 168.662643),

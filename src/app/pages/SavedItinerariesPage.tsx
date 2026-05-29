@@ -192,7 +192,7 @@ export function SavedItinerariesPage() {
                         {itinerary.destination_name}
                       </span>
 
-                      {/* Right: action buttons — no overlap possible */}
+                      {/* Right: action buttons, no overlap possible */}
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={e => { e.preventDefault(); toggleFavorite(itinerary); }}
@@ -228,7 +228,7 @@ export function SavedItinerariesPage() {
                       </div>
                     </div>
 
-                    {/* Title — full width, no padding workaround needed */}
+                    {/* Title, full width, no padding workaround needed */}
                     <h3 className="font-serif text-xl font-bold text-white leading-snug">
                       {itinerary.title}
                     </h3>

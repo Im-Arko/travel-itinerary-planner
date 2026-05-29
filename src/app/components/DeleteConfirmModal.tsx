@@ -52,7 +52,7 @@ export function DeleteConfirmModal({
           <span className="font-semibold text-sand-700">
             "{title}"
           </span>
-          ? Once it's gone, it's gone for good — no coming back!
+          ? Once it's gone, it's gone for good, no coming back!
         </p>
 
         {/* Actions */}

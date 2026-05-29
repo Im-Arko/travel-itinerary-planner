@@ -148,7 +148,7 @@ export function LoginPage() {
           <p className="font-serif text-3xl font-semibold italic leading-snug">
             "The world is a book, and those who do not travel read only one page."
           </p>
-          <p className="font-sans text-sm text-white/55 mt-4">— Saint Augustine</p>
+          <p className="font-sans text-sm text-white/55 mt-4">- Saint Augustine</p>
         </div>
       </div>
     </div>

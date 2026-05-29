@@ -60,7 +60,7 @@ const features = [
     icon: Map,
     color: 'forest',
     title: 'Semantic Search',
-    desc: 'Find destinations that match your vibe using semantic similarity — not just keywords.',
+    desc: 'Find destinations that match your vibe using semantic similarity, not just keywords.',
   },
   {
     icon: Heart,

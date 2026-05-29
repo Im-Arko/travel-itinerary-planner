@@ -45,7 +45,7 @@ export function RegisterPage() {
           <p className="font-serif text-3xl font-semibold italic leading-snug">
             "Not all those who wander are lost."
           </p>
-          <p className="font-sans text-sm text-white/55 mt-4">— J.R.R. Tolkien</p>
+          <p className="font-sans text-sm text-white/55 mt-4">- J.R.R. Tolkien</p>
         </div>
         <div className="absolute bottom-10 left-12 flex items-center gap-2">
           
