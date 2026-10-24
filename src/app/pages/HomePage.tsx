@@ -1,10 +1,8 @@
+import { InterestIcon } from '../components/InterestIcon';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Wand2,
-  Map,
-  Heart,
-  Sparkles,
   ArrowRight,
   Star,
   Calendar,
@@ -16,16 +14,16 @@ const HERO_IMAGE =
   'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80&auto=format&fit=crop';
 
 const preferenceTags = [
-  { emoji: '🏖️', label: 'Beaches', key: 'beaches' },
-  { emoji: '🍜', label: 'Food scenes', key: 'food' },
-  { emoji: '🥾', label: 'Hiking', key: 'hiking' },
-  { emoji: '🏛️', label: 'History', key: 'history' },
-  { emoji: '🎨', label: 'Art & Culture', key: 'art' },
-  { emoji: '🌙', label: 'Nightlife', key: 'nightlife' },
-  { emoji: '🧘', label: 'Wellness', key: 'wellness' },
-  { emoji: '📸', label: 'Photography', key: 'photography' },
-  { emoji: '🦁', label: 'Wildlife', key: 'wildlife' },
-  { emoji: '🏔️', label: 'Mountains', key: 'mountains' },
+  { label: 'Beaches', key: 'beaches' },
+  { label: 'Food scenes', key: 'food' },
+  { label: 'Hiking', key: 'hiking' },
+  { label: 'History', key: 'history' },
+  { label: 'Art & Culture', key: 'art' },
+  { label: 'Nightlife', key: 'nightlife' },
+  { label: 'Wellness', key: 'wellness' },
+  { label: 'Photography', key: 'photography' },
+  { label: 'Wildlife', key: 'wildlife' },
+  { label: 'Mountains', key: 'mountains' },
 ];
 
 const previewDays = [
@@ -49,35 +47,20 @@ const previewDays = [
   },
 ];
 
-const features = [
+const planningSteps = [
   {
-    icon: Sparkles,
-    color: 'primary',
-    title: 'AI-Powered Recommendations',
-    desc: 'Advanced LLM technology analyzes your preferences to create perfectly tailored day-by-day itineraries.',
+    title: 'Tell us what makes a good trip.',
+    description: 'Set your budget, trip length and interests. A week of walking trails should look different from a weekend of food and museums.',
   },
   {
-    icon: Map,
-    color: 'forest',
-    title: 'Semantic Search',
-    desc: 'Find destinations that match your vibe using semantic similarity, not just keywords.',
+    title: 'Find a place that fits.',
+    description: 'Describe what you’re looking for in your own words. Explore destinations, then get a day-by-day plan built around your preferences.',
   },
   {
-    icon: Heart,
-    color: 'sky',
-    title: 'Save & Revisit',
-    desc: 'Save your favourite itineraries, rate them, and access them anytime from anywhere.',
+    title: 'Keep the details together.',
+    description: 'Save your itinerary, add your own notes and come back to it when it’s time to pack. Your next trip has a place to start.',
   },
 ];
-
-const iconBg: Record<string, string> = {
-  primary:
-    'bg-primary-50 text-primary-500 border-primary-100',
-  forest:
-    'bg-forest-50 text-forest-500 border-forest-100',
-  sky:
-    'bg-sky-50 text-sky-500 border-sky-100',
-};
 
 export function HomePage() {
   const { isAuthenticated } = useAuth();
@@ -119,7 +102,7 @@ export function HomePage() {
                   className="w-4 h-4 text-primary-300"
                   fill="currentColor"
                 />
-                AI-powered · Personalized
+                <span className="font-stencil tracking-wider">Made for the journey</span>
               </div>
 
               <h1
@@ -130,7 +113,7 @@ export function HomePage() {
                 "
               >
                 Your perfect trip,
-                <span className="block text-primary-300">
+                <span className="block font-script font-semibold text-primary-300">
                   planned for you
                 </span>
               </h1>
@@ -166,9 +149,7 @@ export function HomePage() {
                       hover:shadow-xl
                     "
                   >
-                    <span className="text-sm">
-                      {tag.emoji}
-                    </span>
+                    <InterestIcon interest={tag.key} />
                     {tag.label}
                   </button>
                 ))}
@@ -360,158 +341,88 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h2
-            className="
-              font-serif text-4xl sm:text-5xl
-              font-bold tracking-tight
-              text-sand-900 mb-5
-            "
-          >
-            Why Choose TRAVELLANT?
-          </h2>
+      <section aria-labelledby="planning-heading" className="bg-[#FAF6F1] px-6 py-16 sm:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 grid gap-5 lg:mb-14 lg:grid-cols-2 lg:items-end lg:gap-20">
+            <div>
+              <p className="mb-4 font-stencil text-xs uppercase tracking-[0.18em] text-[#6C7661]">
+                Before you go
+              </p>
+              <h2 id="planning-heading" className="max-w-xl scroll-mt-24 text-balance font-display text-3xl leading-[1.25] text-[#2C3429] sm:text-4xl lg:text-[2.75rem]">
+                The trip starts with you.
+              </h2>
+            </div>
+            <p className="max-w-md font-sans text-base leading-7 text-[#686A60]">
+              A few details about how you like to travel. A place that catches your eye.
+              We help turn that first idea into a plan for each day.
+            </p>
+          </div>
 
-          <p
-            className="
-              text-sand-400 text-base
-              leading-relaxed max-w-2xl mx-auto
-            "
-          >
-            Three intelligent systems working together
-            to create recommendations that feel deeply
-            personal.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {features.map(({ icon: Icon, color, title, desc }) => (
-            <div
-              key={title}
-              className="
-                group relative overflow-hidden
-                rounded-3xl border border-sand-200
-                bg-white/80 backdrop-blur-sm
-                p-8
-                shadow-lg shadow-black/5
-                transition-all duration-300
-                hover:-translate-y-1
-                hover:shadow-2xl hover:shadow-primary-500/10
-              "
-            >
-              {/* Glow */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-primary-100 blur-3xl" />
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-20">
+            <figure className="relative mx-auto w-full max-w-lg pb-6 sm:pr-5 lg:mx-0">
+              <div className="border border-[#DED7C9] bg-[#FFFDFA] p-3 sm:p-4">
+                <img
+                  src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=85"
+                  alt="A quiet lake surrounded by mountain peaks"
+                  loading="lazy"
+                  width={1000}
+                  height={800}
+                  className="aspect-[5/4] w-full object-cover"
+                />
+                <figcaption className="px-2 pb-1 pt-4 font-script text-2xl leading-tight text-[#5F6956] sm:text-3xl">
+                  Leave a little room to wander.
+                </figcaption>
               </div>
-
-              <div
-                className={`
-                  w-12 h-12 rounded-2xl border
-                  flex items-center justify-center mb-6
-                  transition-transform duration-300
-                  group-hover:scale-110
-                  ${iconBg[color]}
-                `}
-              >
-                <Icon className="w-5 h-5" />
+              <div aria-hidden="true" className="absolute bottom-0 right-0 hidden h-24 w-24 rotate-[-9deg] items-center justify-center rounded-full border border-dashed border-[#7D886E] bg-[#FAF6F1] text-center font-stencil text-[10px] uppercase leading-4 tracking-widest text-[#5F6956] sm:flex">
+                Made for<br />your kind<br />of travel
               </div>
+            </figure>
 
-              <h3 className="font-serif text-x1 font-semibold text-sand-800 mb-4">
-                {title}
+            <ol className="divide-y divide-[#DDD9CD] border-y border-[#DDD9CD]">
+              {planningSteps.map(({ title, description }, index) => (
+                <li key={title} className="grid grid-cols-[2rem_1fr] gap-4 py-7 sm:grid-cols-[2.5rem_1fr] sm:gap-6 sm:py-8">
+                  <span aria-hidden="true" className="pt-1 font-stencil text-sm tracking-wider text-[#8A7964]">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <h3 className="mb-2 font-sans text-lg font-semibold leading-snug text-[#2C3429] sm:text-xl">
+                      {title}
+                    </h3>
+                    <p className="max-w-lg font-sans text-sm leading-7 text-[#686A60] sm:text-[15px]">
+                      {description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="mt-12 flex flex-col gap-7 border-t border-[#DDD9CD] pt-9 sm:mt-16 sm:flex-row sm:items-center sm:justify-between sm:gap-10 sm:pt-10">
+            <div className="max-w-lg">
+              <h3 className="mb-2 font-sans text-xl font-semibold text-[#2C3429] sm:text-2xl">
+                Have a place in mind?
               </h3>
-
-              <p className="text-sand-400 leading-relaxed">
-                {desc}
+              <p className="font-sans text-sm leading-6 text-[#686A60]">
+                Start with a destination, or let your interests lead the way.
               </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      {!isAuthenticated && (
-        <section className="bg-sand-800 py-20 px-6 relative overflow-hidden">
-          {/* Background */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-0 left-1/4 w-72 h-72 bg-amber-200 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-orange-300 rounded-full blur-3xl" />
-          </div>
-
-          <div className="relative max-w-3xl mx-auto text-center">
-            <span
-              className="
-                inline-flex items-center
-                rounded-full border border-sand-600
-                bg-sand-700/60 px-4 py-1.5
-                text-xs font-medium text-sand-200
-                backdrop-blur-sm mb-6
-              "
-            >
-              Smart AI Travel Planning
-            </span>
-
-            <h2
-              className="
-                font-serif text-4xl sm:text-5xl
-                font-bold text-black
-                leading-tight tracking-tight mb-5
-              "
-            >
-              Ready to start your
-              <span className="text-terracotta-500">
-                {' '}
-                next journey?
-              </span>
-            </h2>
-
-            <p
-              className="
-                text-sand-300 font-sans
-                text-base leading-relaxed
-                max-w-2xl mx-auto mb-8
-              "
-            >
-              Join travelers who let AI handle the
-              planning while they focus on unforgettable
-              experiences, hidden gems, and meaningful
-              adventures.
-            </p>
-
-            <div className="flex items-center justify-center">
+            <div className="flex shrink-0 flex-wrap items-center gap-6">
               <Link
-                      to="/register"
-                      className="
-                        group relative inline-flex items-center justify-center gap-2
-                        overflow-hidden rounded-2xl
-                        border border-primary-400
-                        bg-[#fd5e52] px-6 py-3.5
-                        text-sm font-semibold text-white
-                        shadow-warm-xl
-                        transition-all duration-300
-                        hover:-translate-y-1
-                        hover:shadow-2xl
-                      "
-                    >
-                      <span
-                        className="
-                          absolute inset-0
-                          -translate-x-full skew-x-12
-                          bg-white/20
-                          transition-transform duration-700
-                          group-hover:translate-x-[180%]
-                        "
-                      />
-
-                      <span className="relative z-10 flex items-center gap-2">
-                        Create Free Account
-                        <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                      </span>
-                    </Link>
+                to={isAuthenticated ? '/generate' : '/register'}
+                className="inline-flex min-h-12 items-center justify-center gap-4 rounded-lg bg-[#355347] px-6 py-3 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#263E34] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#355347]"
+              >
+                {isAuthenticated ? 'Plan your next trip' : 'Create an account'}
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+              {!isAuthenticated && (
+                <Link to="/login" className="py-2 font-sans text-sm font-medium text-[#355347] underline decoration-[#B3BAAA] underline-offset-4 transition-colors hover:text-[#1D3529] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#355347]">
+                  Sign in
+                </Link>
+              )}
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
     </div>
   );
 }

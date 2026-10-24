@@ -9,6 +9,10 @@
 
 :root {
   --font-size: 16px;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-postcard: 'Caveat', cursive;
+  --font-retro: 'Alfa Slab One', Georgia, serif;
+  --font-stamp: 'Saira Stencil One', Impact, sans-serif;
 
   /* ── Backgrounds ── */
   /* Warm ivory, feels like high-quality paper */
@@ -130,6 +134,11 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-retro);
+  --font-script: var(--font-postcard);
+  --font-display: var(--font-retro);
+  --font-stencil: var(--font-stamp);
   /* ── Core tokens ── */
   --color-background:             var(--background);
   --color-foreground:             var(--foreground);
@@ -255,6 +264,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
   }
 
   html {
@@ -268,4 +278,11 @@
   label  { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
   button { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
   input  { font-size: var(--text-base); font-weight: var(--font-weight-normal); line-height: 1.5; }
+}
+
+@layer utilities {
+  .font-serif, .font-display, .font-stencil {
+    font-weight: 400;
+    font-style: normal;
+  }
 }

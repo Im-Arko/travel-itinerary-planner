@@ -94,14 +94,16 @@ export type UserPreferencePayload = Omit<UserPreference, 'id' | 'user_id' | 'cre
 const TOKEN_KEY = 'access_token';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export const getAccessToken = () => localStorage.getItem(TOKEN_KEY);
+// Remove tokens persisted by older releases. Sessions now end when the tab closes.
+localStorage.removeItem(TOKEN_KEY);
+export const getAccessToken = () => sessionStorage.getItem(TOKEN_KEY);
 
 export const setAccessToken = (token: string) => {
-  localStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(TOKEN_KEY, token);
 };
 
 export const clearAccessToken = () => {
-  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
 };
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {

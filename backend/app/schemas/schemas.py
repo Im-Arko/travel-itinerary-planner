@@ -1,15 +1,28 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Literal, Annotated
 from datetime import datetime
+
+Budget = Literal["budget", "moderate", "luxury"]
+Climate = Literal["any", "tropical", "temperate", "arid", "cold", "mediterranean"]
+DestinationType = Literal["any", "beach", "mountain", "city", "countryside", "adventure", "cultural"]
+TravelStyle = Literal["solo", "couple", "family", "group", "adventure", "cultural", "relaxation", "luxury", "budget"]
+ItineraryStatus = Literal["draft", "saved", "archived"]
+Interest = Annotated[str, Field(min_length=1, max_length=80)]
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
 class UserRegister(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     email: EmailStr
-    username: str
-    password: str
-    full_name: Optional[str] = None
+    username: str = Field(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_-]+$")
+    password: str = Field(min_length=12, max_length=128, repr=False)
+    full_name: Optional[str] = Field(None, max_length=100)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value):
+        return value.lower()
 
     @field_validator("username")
     @classmethod
@@ -21,7 +34,12 @@ class UserRegister(BaseModel):
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=1, max_length=128, repr=False)
+
+
+class AccountDelete(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    password: str = Field(min_length=1, max_length=128, repr=False)
 
 
 class Token(BaseModel):
@@ -47,13 +65,14 @@ class UserOut(BaseModel):
 # ── Preferences ───────────────────────────────────────────────────────────────
 
 class PreferenceUpsert(BaseModel):
-    budget: str = "moderate"
-    preferred_climate: str = "any"
-    destination_type: str = "any"
+    model_config = ConfigDict(extra="forbid")
+    budget: Budget = "moderate"
+    preferred_climate: Climate = "any"
+    destination_type: DestinationType = "any"
     trip_duration: int = Field(7, ge=1, le=30)
-    travel_style: str = "solo"
-    interests: List[str] = Field(default_factory=list)
-    dietary_needs: Optional[str] = None
+    travel_style: TravelStyle = "solo"
+    interests: List[Interest] = Field(default_factory=list, max_length=20)
+    dietary_needs: Optional[str] = Field(None, max_length=255)
     accessibility: bool = False
 
 
@@ -94,7 +113,8 @@ class DestinationSearchResult(BaseModel):
 
 
 class IngestRequest(BaseModel):
-    destination_ids: Optional[List[int]] = None
+    model_config = ConfigDict(extra="forbid")
+    destination_ids: Optional[List[Annotated[int, Field(gt=0)]]] = Field(None, max_length=500)
 
 
 class IngestResponse(BaseModel):
@@ -118,13 +138,14 @@ class DayPlan(BaseModel):
 
 
 class ItineraryGenerateRequest(BaseModel):
-    budget: str
-    preferred_climate: Optional[str] = "any"
-    destination_type: Optional[str] = "any"
+    model_config = ConfigDict(extra="forbid")
+    budget: Budget
+    preferred_climate: Climate = "any"
+    destination_type: DestinationType = "any"
     trip_duration: int = Field(7, ge=1, le=30)
-    travel_style: Optional[str] = "solo"
-    interests: Optional[List[str]] = Field(default_factory=list)
-    destination_hint: Optional[str] = None
+    travel_style: TravelStyle = "solo"
+    interests: List[Interest] = Field(default_factory=list, max_length=20)
+    destination_hint: Optional[str] = Field(None, max_length=500)
 
 
 class ItineraryOut(BaseModel):
@@ -155,8 +176,9 @@ class ItineraryWithDays(ItineraryOut):
 
 
 class ItineraryUpdate(BaseModel):
-    title: Optional[str] = None
-    status: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    status: Optional[ItineraryStatus] = None
     is_favorite: Optional[bool] = None
-    rating: Optional[int] = None
-    user_notes: Optional[str] = None
+    rating: Optional[int] = Field(None, ge=1, le=5)
+    user_notes: Optional[str] = Field(None, max_length=10000)

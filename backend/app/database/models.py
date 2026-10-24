@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Text, DateTime, Boolean,
-    Enum, ForeignKey, DECIMAL, SmallInteger, JSON
+    Enum, ForeignKey, DECIMAL, SmallInteger, JSON, CheckConstraint, UniqueConstraint, Index
 )
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -27,6 +27,11 @@ class User(Base):
 
 class UserPreference(Base):
     __tablename__ = "user_preferences"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_preferences_user"),
+        CheckConstraint("trip_duration IS NOT NULL AND trip_duration BETWEEN 1 AND 30", name="ck_pref_duration"),
+        CheckConstraint("interests IS NULL OR JSON_VALID(interests)", name="ck_pref_interests_json"),
+    )
 
     id                = Column(Integer, primary_key=True, autoincrement=True)
     user_id           = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -70,6 +75,12 @@ class Destination(Base):
 
 class Itinerary(Base):
     __tablename__ = "itineraries"
+    __table_args__ = (
+        CheckConstraint("duration_days BETWEEN 1 AND 30", name="ck_itin_duration"),
+        CheckConstraint("rating IS NULL OR rating BETWEEN 1 AND 5", name="ck_itin_rating"),
+        CheckConstraint("JSON_VALID(full_itinerary)", name="ck_itin_json"),
+        Index("idx_itin_user_generated", "user_id", "generated_at"),
+    )
 
     id               = Column(Integer, primary_key=True, autoincrement=True)
     user_id          = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -96,6 +107,11 @@ class Itinerary(Base):
 
 class ItineraryDay(Base):
     __tablename__ = "itinerary_days"
+    __table_args__ = (
+        UniqueConstraint("itinerary_id", "day_number", name="uq_itin_day"),
+        CheckConstraint("day_number BETWEEN 1 AND 30", name="ck_day_number"),
+        CheckConstraint("estimated_cost IS NULL OR estimated_cost >= 0", name="ck_day_cost"),
+    )
 
     id             = Column(Integer, primary_key=True, autoincrement=True)
     itinerary_id   = Column(Integer, ForeignKey("itineraries.id", ondelete="CASCADE"), nullable=False)
@@ -120,3 +136,18 @@ class RefreshToken(Base):
     expires_at  = Column(DateTime, nullable=False)
     created_at  = Column(DateTime, default=datetime.utcnow)
     revoked     = Column(Boolean, default=False)
+
+
+class SecurityRateLimit(Base):
+    __tablename__ = "security_rate_limits"
+    key = Column(String(64), primary_key=True)
+    hits = Column(Integer, nullable=False)
+    expires_at = Column(Integer, nullable=False, index=True)
+
+
+class DestinationEmbedding(Base):
+    __tablename__ = "destination_embeddings"
+    destination_id = Column(Integer, ForeignKey("destinations.id", ondelete="CASCADE"), primary_key=True)
+    model_name = Column(String(255), nullable=False, index=True)
+    document = Column(Text, nullable=False)
+    embedding = Column(JSON, nullable=False)

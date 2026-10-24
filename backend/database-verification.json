@@ -1,0 +1,29 @@
+{
+  "verified_at_utc": "2026-10-22T22:00:14.427310+00:00",
+  "server_version": "12.2.2-MariaDB",
+  "record_counts": {
+    "users": 13,
+    "user_preferences": 4,
+    "destinations": 65,
+    "itineraries": 12,
+    "itinerary_days": 72,
+    "refresh_tokens": 0,
+    "destination_embeddings": 65
+  },
+  "runtime_schema_privileges": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tls_version": "TLSv1.3",
+  "certificate_verification": "CERT_REQUIRED",
+  "hostname_verification": true,
+  "constraint_checks_passed": 9,
+  "unit_tests_passed": 18,
+  "live_smoke_checks_passed": 9,
+  "backend_url": "http://127.0.0.1:8001",
+  "mock_itinerary_generator": true,
+  "installed_packages_audited": 96,
+  "known_dependency_vulnerabilities": 0
+}

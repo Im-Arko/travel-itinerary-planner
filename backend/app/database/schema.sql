@@ -32,14 +32,16 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     preferred_climate ENUM('tropical','temperate','arid','cold','mediterranean','any') NOT NULL DEFAULT 'any',
     destination_type ENUM('beach','mountain','city','countryside','adventure','cultural','any') NOT NULL DEFAULT 'any',
     trip_duration    TINYINT UNSIGNED NOT NULL DEFAULT 7 COMMENT 'Number of days',
-    travel_style     SET('solo','couple','family','group') DEFAULT 'solo',
+    travel_style     VARCHAR(50) DEFAULT 'solo',
     interests        TEXT COMMENT 'JSON array of interest tags',
     dietary_needs    VARCHAR(255),
     accessibility    BOOLEAN DEFAULT FALSE,
     created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_pref_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_pref_user (user_id)
+    UNIQUE KEY uq_preferences_user (user_id),
+    CONSTRAINT ck_pref_duration CHECK (trip_duration BETWEEN 1 AND 30),
+    CONSTRAINT ck_pref_interests_json CHECK (interests IS NULL OR JSON_VALID(interests))
 ) ENGINE=InnoDB;
 
 -- ────────────────────────────────────────────────────────────
@@ -90,7 +92,9 @@ CREATE TABLE IF NOT EXISTS itineraries (
     updated_at      DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_itin_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_itin_dest FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE SET NULL,
-    INDEX idx_itin_user (user_id),
+    CONSTRAINT ck_itin_duration CHECK (duration_days BETWEEN 1 AND 30),
+    CONSTRAINT ck_itin_json CHECK (JSON_VALID(full_itinerary)),
+    INDEX idx_itin_user_generated (user_id, generated_at),
     INDEX idx_itin_status (status),
     INDEX idx_itin_favorite (user_id, is_favorite)
 ) ENGINE=InnoDB;
@@ -110,6 +114,8 @@ CREATE TABLE IF NOT EXISTS itinerary_days (
     estimated_cost DECIMAL(10,2),
     tips          TEXT,
     CONSTRAINT fk_day_itin FOREIGN KEY (itinerary_id) REFERENCES itineraries(id) ON DELETE CASCADE,
+    CONSTRAINT ck_day_number CHECK (day_number BETWEEN 1 AND 30),
+    CONSTRAINT ck_day_cost CHECK (estimated_cost IS NULL OR estimated_cost >= 0),
     INDEX idx_day_itin (itinerary_id),
     UNIQUE KEY uq_itin_day (itinerary_id, day_number)
 ) ENGINE=InnoDB;
@@ -127,6 +133,22 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     CONSTRAINT fk_tok_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_tok_user (user_id),
     INDEX idx_tok_hash (token_hash)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS security_rate_limits (
+    `key` VARCHAR(64) PRIMARY KEY,
+    hits INT NOT NULL,
+    expires_at INT NOT NULL,
+    INDEX idx_rate_expiry (expires_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS destination_embeddings (
+    destination_id INT UNSIGNED PRIMARY KEY,
+    model_name VARCHAR(255) NOT NULL,
+    document TEXT NOT NULL,
+    embedding JSON NOT NULL,
+    CONSTRAINT fk_embedding_destination FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE,
+    INDEX idx_embedding_model (model_name)
 ) ENGINE=InnoDB;
 
 -- ────────────────────────────────────────────────────────────

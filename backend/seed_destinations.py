@@ -19,7 +19,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database.session import SessionLocal
 from app.database.models import Destination
-from app.services import vector_store
+from app.schemas import vector_store
 
 DESTINATIONS = [
     # ── Asia ──────────────────────────────────────────────────
@@ -109,7 +109,7 @@ def seed(clear_existing: bool = False):
         if existing > 0 and not clear_existing:
             print(f"⚠️  {existing} destinations already in DB.")
             print("   Run with --clear to wipe and re-seed.")
-            print("   Skipping insert, running ChromaDB ingest only...\n")
+            print("   Skipping insert, running database embeddings ingest only...\n")
         else:
             if clear_existing and existing > 0:
                 print(f"🗑️  Clearing {existing} existing destinations...")
@@ -122,9 +122,9 @@ def seed(clear_existing: bool = False):
             db.commit()
             print(f"✅ Inserted {len(DESTINATIONS)} destinations.\n")
 
-        print("🔍 Ingesting into ChromaDB vector store...")
+        print("🔍 Ingesting into database embedding index...")
         count = vector_store.ingest_destinations(db)
-        print(f"✅ Ingested {count} destinations into ChromaDB.")
+        print(f"✅ Ingested {count} destinations into database embeddings.")
         print("\n🎉 All done! Refresh your app to see all destinations.")
 
     except Exception as e:

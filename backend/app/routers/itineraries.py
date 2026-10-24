@@ -10,14 +10,15 @@ from ..schemas.schemas import (
     ItineraryUpdate, DayPlan,
 )
 from ..services.auth_service import get_current_user
-from ..services import vector_store, llm_service
+from ..schemas import vector_store, llm_service
+from ..security import generation_limit
 
 router = APIRouter(prefix="/api/itineraries", tags=["Itineraries"])
 
 
 # ── Generate ───────────────────────────────────────────────────
 
-@router.post("/generate", response_model=ItineraryWithDays, status_code=201,
+@router.post("/generate", response_model=ItineraryWithDays, status_code=201, dependencies=[Depends(generation_limit)],
              summary="Generate a personalised AI itinerary using vector search + LLM")
 def generate_itinerary(
     payload:      ItineraryGenerateRequest,
@@ -30,7 +31,7 @@ def generate_itinerary(
             detail="No destinations exist in the database. Seed destination data before generating itineraries.",
         )
 
-    if vector_store.collection_count() == 0:
+    if vector_store.collection_count(db) == 0:
         ingested = vector_store.ingest_destinations(db)
         if ingested == 0:
             raise HTTPException(
@@ -50,7 +51,7 @@ def generate_itinerary(
     search_query = " ".join(query_parts)
 
     # 2. Semantic search for matching destinations
-    matches = vector_store.semantic_search(
+    matches = vector_store.semantic_search(db=db,
         query_text       = search_query,
         n_results        = 3,
         budget_filter    = payload.budget if payload.budget != "any" else None,
@@ -60,7 +61,7 @@ def generate_itinerary(
 
     if not matches:
         # Fallback: search without filters
-        matches = vector_store.semantic_search(query_text=search_query, n_results=3)
+        matches = vector_store.semantic_search(db=db, query_text=search_query, n_results=3)
 
     if not matches:
         fallback_dest = db.query(Destination).first()
@@ -102,10 +103,13 @@ def generate_itinerary(
             accessibility = False,
             dest_context = dest_ctx,
         )
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=502, detail=f"LLM output parse failed: {exc}") from exc
+        raw = llm_service.ItineraryLLM.model_validate(raw).model_dump()
+        if [day["day_number"] for day in raw["days"]] != list(range(1, payload.trip_duration + 1)):
+            raise ValueError("Invalid day sequence")
+    except RuntimeError:
+        raise HTTPException(status_code=503, detail="Trip generation is temporarily unavailable") from None
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=502, detail="The trip provider returned an invalid itinerary") from None
 
     # 4. Persist to DB
     itin = Itinerary(

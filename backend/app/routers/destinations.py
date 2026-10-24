@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from ..database.session import get_db
 from ..database.models import User, Destination
 from ..schemas.schemas import DestinationOut, DestinationSearchResult, IngestRequest, IngestResponse
-from ..services.auth_service import get_current_user
-from ..services import vector_store
+from ..services.auth_service import get_current_user, get_admin_user
+from ..schemas import vector_store
+from ..security import search_limit
 
 router = APIRouter(prefix="/api/destinations", tags=["Destinations"])
 
@@ -33,10 +34,10 @@ def list_destinations(
     return q.offset(skip).limit(limit).all()
 
 
-@router.get("/search", response_model=List[DestinationSearchResult],
+@router.get("/search", response_model=List[DestinationSearchResult], dependencies=[Depends(search_limit)],
             summary="Semantic search destinations using natural language query")
 def search_destinations(
-    q:            str           = Query(..., description="Natural language search query"),
+    q:            str           = Query(..., min_length=1, max_length=500, description="Natural language search query"),
     budget:       Optional[str] = Query(None),
     climate:      Optional[str] = Query(None),
     dest_type:    Optional[str] = Query(None),
@@ -44,7 +45,7 @@ def search_destinations(
     db:           Session       = Depends(get_db),
     current_user: User          = Depends(get_current_user),
 ):
-    results = vector_store.semantic_search(
+    results = vector_store.semantic_search(db=db,
         query_text       = q,
         n_results        = limit,
         budget_filter    = budget,
@@ -66,8 +67,8 @@ def search_destinations(
 
 @router.get("/vector/count",
             summary="Get count of documents in vector store")
-def vector_count(current_user: User = Depends(get_current_user)):
-    return {"count": vector_store.collection_count()}
+def vector_count(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return {"count": vector_store.collection_count(db)}
 
 
 @router.get("/{destination_id}", response_model=DestinationOut,
@@ -85,11 +86,11 @@ def get_destination(
 
 
 @router.post("/ingest", response_model=IngestResponse,
-             summary="Ingest destinations into the ChromaDB vector store")
+             summary="Ingest destinations into the destination embedding index")
 def ingest_destinations(
     payload:      IngestRequest,
     db:           Session      = Depends(get_db),
-    current_user: User         = Depends(get_current_user),
+    current_user: User         = Depends(get_admin_user),
 ):
     count = vector_store.ingest_destinations(db, payload.destination_ids)
     return IngestResponse(ingested=count, message=f"Successfully ingested {count} destinations")

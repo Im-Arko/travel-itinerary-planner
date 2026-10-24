@@ -1,79 +1,74 @@
-import { Luggage, AlertTriangle, X } from 'lucide-react';
-
+import { useEffect, useRef } from "react";
+import { Trash2 } from "lucide-react";
 interface DeleteConfirmModalProps {
   title: string;
   onConfirm: () => void;
   onCancel: () => void;
   isDeleting?: boolean;
 }
-
 export function DeleteConfirmModal({
   title,
   onConfirm,
   onCancel,
   isDeleting,
 }: DeleteConfirmModalProps) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    element?.showModal();
+    return () => element?.close();
+  }, []);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={!isDeleting ? onCancel : undefined}
-      />
-
-      {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
-        {/* Close button */}
+    <dialog
+      ref={dialog}
+      aria-labelledby="delete-title"
+      aria-describedby="delete-description"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-md border border-[#d6dcc8] bg-[#fffdf6] p-7 sm:p-9 shadow-2xl backdrop:bg-[#10291d]/65 backdrop:backdrop-blur-sm"
+      onCancel={(e) => {
+        e.preventDefault();
+        if (!isDeleting) onCancel();
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isDeleting) {
+          const bounds = e.currentTarget.getBoundingClientRect();
+          if (
+            e.clientX < bounds.left ||
+            e.clientX > bounds.right ||
+            e.clientY < bounds.top ||
+            e.clientY > bounds.bottom
+          )
+            onCancel();
+        }
+      }}
+    >
+      <Trash2 size={26} strokeWidth={1.4} className="text-[#a24f3c] mb-5" />
+      <p className="travel-eyebrow text-[#8b8467] mb-2">Your travel journal</p>
+      <h2 id="delete-title" className="editorial-title">
+        Delete this itinerary?
+      </h2>
+      <p
+        id="delete-description"
+        className="text-sm leading-7 text-[#69755e] mt-4"
+      >
+        “{title}” will be permanently removed from your saved trips.
+      </p>
+      <div className="grid grid-cols-2 gap-3 mt-7">
         <button
+          autoFocus
           onClick={onCancel}
           disabled={isDeleting}
-          className="absolute top-4 right-4 p-1.5 rounded-md text-sand-400 hover:text-sand-600 hover:bg-sand-100 transition-colors disabled:opacity-50"
+          className="travel-button travel-button-outline"
         >
-          <X className="w-4 h-4" />
+          Keep it
         </button>
-
-        {/* Icon */}
-        <div className="mx-auto mb-4 w-16 h-16 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center">
-          <div className="relative">
-            <Luggage className="w-8 h-8 text-red-400" />
-            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-md bg-red-200 flex items-center justify-center">
-              <AlertTriangle className="w-3 h-3 text-red-500" />
-            </div>
-          </div>
-        </div>
-
-        {/* Text */}
-        <h3 className="text-center font-serif text-xl font-bold text-sand-800 mb-2">
-          Leave this trip behind?
-        </h3>
-
-        <p className="text-center text-sand-500 text-sm leading-relaxed mb-6">
-          Say goodbye to{' '}
-          <span className="font-semibold text-sand-700">
-            "{title}"
-          </span>
-          ? Once it's gone, it's gone for good, no coming back!
-        </p>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            disabled={isDeleting}
-            className="flex-1 py-3 rounded-lg border border-sand-200 text-sand-600 font-medium hover:bg-sand-50 transition-colors disabled:opacity-50"
-          >
-            Keep it
-          </button>
-
-          <button
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="flex-1 py-3 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-all shadow-lg shadow-red-200 disabled:opacity-60"
-          >
-            {isDeleting ? 'Vanishing…' : 'Delete'}
-          </button>
-        </div>
+        <button
+          onClick={onConfirm}
+          disabled={isDeleting}
+          className="travel-button bg-[#9c4937] border-[#9c4937] hover:bg-[#823c2c] hover:border-[#823c2c]"
+        >
+          {isDeleting ? "Deleting…" : "Delete trip"}
+        </button>
       </div>
-    </div>
+    </dialog>
   );
 }

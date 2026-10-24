@@ -1,198 +1,124 @@
-"""
-Vector Store Service
-──────────────────────────────────────────────────────────────
-Manages destination embeddings in ChromaDB using Sentence Transformers.
-Provides semantic similarity search for destination matching.
-"""
+"""Semantic search using JSON embeddings in the application's SQL database.
 
+Only operator-configured Sentence Transformer models run locally. There is no
+separate vector server, remote collection configuration, pickle, or executable
+model configuration supplied by API clients.
+"""
 import json
-import logging
-from typing import List, Optional
-
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-from sentence_transformers import SentenceTransformer
+import math
+from threading import Lock
+from typing import Optional
 from sqlalchemy.orm import Session
-
 from ..config import get_settings
-from ..database.models import Destination
+from ..database.models import Destination, DestinationEmbedding
 
-logger   = logging.getLogger(__name__)
 settings = get_settings()
-
-# ── Lazy singletons ────────────────────────────────────────────
-
-_chroma_client: Optional[chromadb.Client] = None
-_collection = None
-_embedder: Optional[SentenceTransformer] = None
+_embedder = None
+_embedder_lock = Lock()
 
 
-def _get_embedder() -> SentenceTransformer:
+def _get_embedder():
     global _embedder
-    if _embedder is None:
-        logger.info("Loading sentence transformer model: %s", settings.embedding_model)
-        _embedder = SentenceTransformer(settings.embedding_model)
+    with _embedder_lock:
+        if _embedder is None:
+            from sentence_transformers import SentenceTransformer
+            _embedder = SentenceTransformer(
+                settings.embedding_model, trust_remote_code=False,
+                model_kwargs={"use_safetensors": True},
+            )
     return _embedder
 
 
-def _get_collection():
-    global _chroma_client, _collection
-    if _collection is None:
-        _chroma_client = chromadb.PersistentClient(
-            path=settings.chroma_persist_dir,
-        )
-        _collection = _chroma_client.get_or_create_collection(
-            name=settings.chroma_collection_name,
-            metadata={"hnsw:space": "cosine"},
-        )
-    return _collection
-
-
-# ── Build rich text for embedding ──────────────────────────────
-
 def _build_doc_text(dest: Destination) -> str:
-    tags_str = ""
+    tags = []
     if dest.tags:
         try:
-            tags_str = ", ".join(json.loads(dest.tags))
-        except Exception:
-            tags_str = dest.tags
-
+            parsed = json.loads(dest.tags)
+            if isinstance(parsed, list):
+                tags = [tag for tag in parsed if isinstance(tag, str)]
+        except (ValueError, TypeError):
+            pass
     return (
-        f"Destination: {dest.name}, {dest.country}. "
-        f"Type: {dest.destination_type}. "
-        f"Climate: {dest.climate_type}. "
-        f"Budget: {dest.budget_level}. "
-        f"Tags: {tags_str}. "
-        f"{dest.description}"
+        f"Destination: {dest.name}, {dest.country}. Type: {dest.destination_type}. "
+        f"Climate: {dest.climate_type}. Budget: {dest.budget_level}. "
+        f"Tags: {', '.join(tags)}. {dest.description}"
     )
 
 
-# ── Ingest ─────────────────────────────────────────────────────
+def _validated_vector(values) -> list[float]:
+    vector = [float(value) for value in values]
+    if not 1 <= len(vector) <= 4096 or not all(math.isfinite(value) for value in vector):
+        raise ValueError("Invalid embedding")
+    return vector
 
-def ingest_destinations(db: Session, destination_ids: Optional[List[int]] = None) -> int:
-    """
-    Embed destination descriptions and upsert into ChromaDB.
-    Returns number of documents ingested.
-    """
+
+def ingest_destinations(db: Session, destination_ids: Optional[list[int]] = None) -> int:
     query = db.query(Destination)
-    if destination_ids:
+    if destination_ids is not None:
         query = query.filter(Destination.id.in_(destination_ids))
-    destinations = query.all()
-
+    destinations = query.order_by(Destination.id).all()
     if not destinations:
         return 0
-
-    
-
-    embedder   = _get_embedder()
-
-    texts = [_build_doc_text(d) for d in destinations]
-    ids   = [f"dest_{d.id}" for d in destinations]
-    metas = [
-        {
-            "destination_id":   str(d.id),
-            "name":             d.name,
-            "country":          d.country,
-            "climate_type":     d.climate_type,
-            "destination_type": d.destination_type,
-            "budget_level":     d.budget_level,
-        }
-        for d in destinations
-    ]
-
-    embeddings = embedder.encode(texts, show_progress_bar=False).tolist()
-    
-    collection = _get_collection()
-
-    collection.upsert(
-        ids        = ids,
-        embeddings = embeddings,
-        documents  = texts,
-        metadatas  = metas,
-    )
-
-    # Save chroma_doc_id back to DB
-    for d, doc_id in zip(destinations, ids):
-        d.chroma_doc_id = doc_id
-    db.commit()
-
-    logger.info("Ingested %d destinations into ChromaDB", len(destinations))
+    embedder = _get_embedder()
+    # Bounded batches avoid materializing the whole embedding matrix.
+    for offset in range(0, len(destinations), 64):
+        batch = destinations[offset:offset + 64]
+        vectors = embedder.encode([_build_doc_text(dest) for dest in batch],
+                                  show_progress_bar=False, normalize_embeddings=True)
+        for dest, values in zip(batch, vectors):
+            row = db.get(DestinationEmbedding, dest.id)
+            if row is None:
+                row = DestinationEmbedding(destination_id=dest.id)
+                db.add(row)
+            row.model_name = settings.embedding_model
+            row.document = _build_doc_text(dest)
+            row.embedding = _validated_vector(values)
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return len(destinations)
 
 
-# ── Semantic search ────────────────────────────────────────────
-
 def semantic_search(
-    query_text: str,
-    n_results: int = 5,
-    budget_filter: Optional[str] = None,
-    climate_filter: Optional[str] = None,
+    db: Session, query_text: str, n_results: int = 5,
+    budget_filter: Optional[str] = None, climate_filter: Optional[str] = None,
     dest_type_filter: Optional[str] = None,
-) -> List[dict]:
-    """
-    Encode query and find semantically similar destinations.
-    Returns list of {destination_id, name, country, score, document}.
-    """
-    embedder   = _get_embedder()
-    
-    collection = _get_collection()
-    if collection.count() == 0:
-        logger.warning("Semantic search requested with an empty vector collection")
+) -> list[dict]:
+    query = db.query(Destination, DestinationEmbedding).join(
+        DestinationEmbedding, DestinationEmbedding.destination_id == Destination.id
+    ).filter(DestinationEmbedding.model_name == settings.embedding_model)
+    for column, value in ((Destination.budget_level, budget_filter),
+                          (Destination.climate_type, climate_filter),
+                          (Destination.destination_type, dest_type_filter)):
+        if value and value != "any":
+            query = query.filter(column == value)
+    if query.first() is None:
         return []
-    # Build ChromaDB where clause
-    where_clauses = []
-    if budget_filter and budget_filter != "any":
-        where_clauses.append({"budget_level": {"$eq": budget_filter}})
-    if climate_filter and climate_filter != "any":
-        where_clauses.append({"climate_type": {"$eq": climate_filter}})
-    if dest_type_filter and dest_type_filter != "any":
-        where_clauses.append({"destination_type": {"$eq": dest_type_filter}})
-
-    where = None
-    if len(where_clauses) == 1:
-        where = where_clauses[0]
-    elif len(where_clauses) > 1:
-        where = {"$and": where_clauses}
-
-    query_embedding = embedder.encode([query_text], show_progress_bar=False).tolist()
-
-    kwargs = {
-        "query_embeddings": query_embedding,
-        "n_results":        min(n_results, collection.count() or 1),
-        "include":          ["metadatas", "documents", "distances"],
-    }
-    if where:
-        kwargs["where"] = where
-
-    try:
-        results = collection.query(**kwargs)
-    except Exception:
-        logger.exception("ChromaDB query failed")
+    needle = _validated_vector(_get_embedder().encode(
+        [query_text], show_progress_bar=False, normalize_embeddings=True
+    )[0])
+    needle_norm = math.sqrt(sum(value * value for value in needle))
+    if needle_norm == 0:
         return []
-
-    output = []
-    metadatas = results.get("metadatas") or [[]]
-    documents = results.get("documents") or [[]]
-    distances = results.get("distances") or [[]]
-
-    for i, meta in enumerate(metadatas[0]):
-        score = 1.0 - results["distances"][0][i]   # cosine → similarity
-        output.append({
-            "destination_id": int(meta["destination_id"]),
-            "name":           meta["name"],
-            "country":        meta["country"],
-            "score":          round(score, 4),
-            "document":       documents[0][i],
+    matches = []
+    for dest, row in query.yield_per(100):
+        vector = _validated_vector(row.embedding)
+        if len(vector) != len(needle):
+            continue
+        norm = math.sqrt(sum(value * value for value in vector))
+        if norm == 0:
+            continue
+        similarity = sum(a * b for a, b in zip(needle, vector)) / (needle_norm * norm)
+        matches.append({
+            "destination_id": dest.id, "name": dest.name, "country": dest.country,
+            "score": round(max(-1.0, min(1.0, similarity)), 4), "document": row.document,
         })
-    
-
-    return output
+    return sorted(matches, key=lambda item: (-item["score"], item["destination_id"]))[:n_results]
 
 
-
-def collection_count() -> int:
-    try:
-        return _get_collection().count()
-    except Exception:
-        return 0
+def collection_count(db: Session) -> int:
+    return db.query(DestinationEmbedding).filter(
+        DestinationEmbedding.model_name == settings.embedding_model
+    ).count()

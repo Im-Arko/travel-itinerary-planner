@@ -3,6 +3,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from ..database.session import get_db
 from ..database.models import UserPreference, User
@@ -78,7 +79,11 @@ def upsert_preferences(
     pref.accessibility = payload.accessibility
     pref.updated_at = datetime.utcnow()
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Preferences changed concurrently; please retry") from None
     db.refresh(pref)
     return _to_out(pref)
 

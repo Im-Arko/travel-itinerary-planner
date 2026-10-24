@@ -1,2 +1,1 @@
-from .auth_service import *
-from ..schemas import vector_store, llm_service
+"""Service modules are imported explicitly to avoid loading ML for auth requests."""

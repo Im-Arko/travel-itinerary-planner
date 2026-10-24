@@ -1,99 +1,111 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { usePreferences } from '../context/PreferencesContext';
-import { destinationsApi, itinerariesApi, ItineraryWithDays } from '../services/api';
-import { errorMessage, normalizeBudget, normalizeClimate, normalizeDestinationType } from '../utils/formatters';
-import { Sparkles, MapPin, Calendar, DollarSign, Loader, AlertCircle, Heart, Database, CheckCircle, Wand2, Clock, Users, Globe, ArrowRight } from 'lucide-react';
-import { Slider } from '@mui/material';
-
-const budgets = ['budget', 'moderate', 'luxury'];
-const climates = ['any', 'tropical', 'temperate', 'arid', 'cold', 'mediterranean'];
-const destinationTypes = ['any', 'beach', 'mountain', 'city', 'countryside', 'adventure', 'cultural'];
-const travelStyles = ['solo', 'couple', 'family', 'adventure', 'cultural', 'relaxation', 'luxury', 'budget'];
-
-// Preference tag cloud for visual personalization
-const preferenceTagCloud = [
-  { emoji: '🏖️', label: 'Beaches', key: 'beaches' },
-  { emoji: '🍜', label: 'Food', key: 'food' },
-  { emoji: '🥾', label: 'Hiking', key: 'hiking' },
-  { emoji: '🏛️', label: 'History', key: 'history' },
-  { emoji: '🎨', label: 'Art', key: 'art' },
-  { emoji: '🌙', label: 'Nightlife', key: 'nightlife' },
-  { emoji: '🧘', label: 'Wellness', key: 'wellness' },
-  { emoji: '📸', label: 'Photography', key: 'photography' },
-  { emoji: '🦁', label: 'Wildlife', key: 'wildlife' },
-  { emoji: '🏔️', label: 'Mountains', key: 'mountains' },
+import { InterestIcon } from "../components/InterestIcon";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { usePreferences } from "../context/PreferencesContext";
+import { itinerariesApi, ItineraryWithDays } from "../services/api";
+import {
+  errorMessage,
+  normalizeBudget,
+  normalizeClimate,
+  normalizeDestinationType,
+  titleCase,
+} from "../utils/formatters";
+import { Loader, AlertCircle, ArrowRight, Compass } from "lucide-react";
+import { Slider } from "@mui/material";
+import { TravelHero, travelPhotos } from "../components/TravelHero";
+import { useDestinationPhoto } from "../components/useDestinationPhoto";
+const budgets = ["budget", "moderate", "luxury"];
+const climates = [
+  "any",
+  "tropical",
+  "temperate",
+  "arid",
+  "cold",
+  "mediterranean",
 ];
-
-const interestOptions = ['Beach', 'Mountains', 'Cities', 'History', 'Food', 'Art', 'Shopping', 'Nightlife', 'Wildlife', 'Photography', 'Wellness', 'Adventure Sports'];
-
+const destinationTypes = [
+  "any",
+  "beach",
+  "mountain",
+  "city",
+  "countryside",
+  "adventure",
+  "cultural",
+];
+const travelStyles = [
+  "solo",
+  "couple",
+  "family",
+  "adventure",
+  "cultural",
+  "relaxation",
+  "luxury",
+  "budget",
+];
+const interestOptions = [
+  "Beach",
+  "Mountains",
+  "Cities",
+  "History",
+  "Food",
+  "Art",
+  "Shopping",
+  "Nightlife",
+  "Wildlife",
+  "Photography",
+  "Wellness",
+  "Adventure Sports",
+];
 export function GenerateItineraryPage() {
   const { isAuthenticated, loading } = useAuth();
   const { preferences } = usePreferences();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [destinationHint, setDestinationHint] = useState(searchParams.get('destination') || preferences?.destinationHint || '');
+  const [destinationHint, setDestinationHint] = useState(
+    searchParams.get("destination") || preferences?.destinationHint || "",
+  );
   const [duration, setDuration] = useState(preferences?.tripDuration || 7);
   const [budget, setBudget] = useState(normalizeBudget(preferences?.budget));
-  const [climate, setClimate] = useState(normalizeClimate(preferences?.climate));
-  const [destinationType, setDestinationType] = useState('any');
-  const [travelStyle, setTravelStyle] = useState(preferences?.travelStyle || 'solo');
-  const [interests, setInterests] = useState<string[]>(preferences?.interests || []);
+  const [climate, setClimate] = useState(
+    normalizeClimate(preferences?.climate),
+  );
+  const [destinationType, setDestinationType] = useState("any");
+  const [travelStyle, setTravelStyle] = useState(
+    preferences?.travelStyle || "solo",
+  );
+  const [interests, setInterests] = useState<string[]>(
+    preferences?.interests || [],
+  );
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isValidatingPipeline, setIsValidatingPipeline] = useState(false);
-  const [pipelineStatus, setPipelineStatus] = useState('');
-  const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryWithDays | null>(null);
-  const [error, setError] = useState('');
+  const [generatedItinerary, setGeneratedItinerary] =
+    useState<ItineraryWithDays | null>(null);
+  const [error, setError] = useState("");
+  const resultPanel = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (generatedItinerary) resultPanel.current?.focus();
+  }, [generatedItinerary]);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) navigate('/login');
+    if (!loading && !isAuthenticated) navigate("/login");
   }, [isAuthenticated, loading, navigate]);
 
   const toggleInterest = (interest: string) => {
-    setInterests(prev => prev.includes(interest) ? prev.filter(item => item !== interest) : [...prev, interest]);
+    setInterests((prev) =>
+      prev.includes(interest)
+        ? prev.filter((item) => item !== interest)
+        : [...prev, interest],
+    );
   };
-
-  const validatePipeline = async () => {
-    setIsValidatingPipeline(true);
-    setError('');
-    try {
-      const current = await destinationsApi.vectorCount();
-      if (current.count > 0) {
-        setPipelineStatus(`Vector store ready with ${current.count} destinations.`);
-        return;
-      }
-
-      const ingestResult = await destinationsApi.ingest();
-      const refreshed = await destinationsApi.vectorCount();
-      setPipelineStatus(`${ingestResult.message}. Vector store now has ${refreshed.count} destinations.`);
-    } catch (err) {
-      setPipelineStatus('');
-      setError(errorMessage(err, 'Unable to validate vector ingestion pipeline.'));
-    } finally {
-      setIsValidatingPipeline(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      validatePipeline();
-    }
-  }, [isAuthenticated]);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
     setGeneratedItinerary(null);
-    setError('');
+    setError("");
 
     try {
-      const current = await destinationsApi.vectorCount();
-      if (current.count === 0) {
-        await destinationsApi.ingest();
-      }
-
       const result = await itinerariesApi.generate({
         budget: normalizeBudget(budget),
         preferred_climate: normalizeClimate(climate),
@@ -105,253 +117,268 @@ export function GenerateItineraryPage() {
       });
       setGeneratedItinerary(result);
     } catch (err) {
-      setError(errorMessage(err, 'Unable to generate itinerary.'));
+      setError(errorMessage(err, "Unable to generate itinerary."));
     } finally {
       setIsGenerating(false);
     }
   };
 
+  const resultPhoto = useDestinationPhoto(generatedItinerary?.destination_id);
   if (loading) return null;
-
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-sm font-sans mb-4">
-            <Sparkles className="w-4 h-4" />
-            AI-Powered Trip Planning
+    <div>
+      <TravelHero
+        image={travelPhotos.road}
+        eyebrow="The beginning of a good story"
+        title="Let's take the scenic route."
+        script="You bring the curiosity."
+        description="Choose a place, set your pace, and leave room for the unexpected. We'll help you turn an idea into a day-by-day plan."
+        caption="Where to next?"
+      />
+      <div className="travel-container travel-section grid lg:grid-cols-[1fr_340px] gap-9 items-start">
+        <div className="paper-panel paper-pad">
+          <div className="flex justify-between gap-4 items-center mb-8">
+            <div>
+              <p className="travel-eyebrow text-[#869073] mb-2">
+                A plan in the making
+              </p>
+              <h2 className="editorial-title">Your next adventure</h2>
+            </div>
+            <Compass
+              size={33}
+              strokeWidth={1}
+              className="text-[#8d9675] shrink-0"
+            />
           </div>
-          <h1 className="font-serif text-4xl font-bold text-sand-800 mb-3">Generate Your Itinerary</h1>
-          <p className="text-sand-500 font-sans text-lg max-w-2xl mx-auto">
-            Find your next adventure with personalized itineraries crafted by advanced AI and semantic search.
-          </p>
-        </div>
-
-        {/* Preference Tag Cloud */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
-          {preferenceTagCloud.map((tag) => (
-            <button
-              key={tag.key}
-              type="button"
-              className="group flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-sand-200 text-sand-600 text-sm font-medium transition-all duration-200 hover:bg-primary-500 hover:border-primary-400 hover:text-white hover:shadow-md"
+          <form onSubmit={handleGenerate}>
+            <fieldset
+              disabled={isGenerating}
+              className="min-w-0 disabled:opacity-60"
             >
-              <span className="text-base">{tag.emoji}</span>
-              {tag.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-warm-lg p-8 border border-sand-100">
-              <h2 className="font-serif text-2xl font-bold text-sand-800 mb-6 flex items-center gap-2">
-                <Wand2 className="w-6 h-6 text-primary-500" />
-                Trip Details
-              </h2>
-
-              <form onSubmit={handleGenerate} className="space-y-6">
-                {/* Destination Hint */}
-                <div>
-                  <label className="flex items-center gap-2 text-sand-700 font-semibold mb-3">
-                    <MapPin className="w-5 h-5 text-primary-500" />
-                    Destination Hint
+              <div className="travel-field mb-7">
+                <label htmlFor="trip-destination">
+                  Where are you dreaming of?
+                </label>
+                <input
+                  id="trip-destination"
+                  value={destinationHint}
+                  onChange={(e) => setDestinationHint(e.target.value)}
+                  maxLength={500}
+                  className="travel-input"
+                  placeholder="A place, a feeling, or a little of both…"
+                />
+                <p className="form-hint">
+                  Try “Kyoto” or “quiet mountain towns with great food”.
+                </p>
+              </div>
+              <div className="border-y border-[#e0e2d5] py-5 mb-7">
+                <div className="flex justify-between items-center gap-4">
+                  <label id="duration-label" className="travel-label">
+                    How long have you got?
                   </label>
-                  <input
-                    value={destinationHint}
-                    onChange={(e) => setDestinationHint(e.target.value)}
-                    className="input py-3 text-base"
-                    placeholder="Paris, tropical beaches, mountain towns..."
-                  />
+                  <span className="font-script text-3xl text-[#597447]">
+                    {duration} days
+                  </span>
                 </div>
-
-                {/* Duration Slider */}
-                <div>
-                  <label className="flex items-center gap-2 text-sand-700 font-semibold mb-3">
-                    <Clock className="w-5 h-5 text-primary-500" />
-                    Duration: <span className="text-primary-600">{duration} days</span>
-                  </label>
-                  <Slider value={duration} onChange={(_, value) => setDuration(value as number)} min={1} max={30} sx={{ color: '#c84b31' }} />
-                  <div className="flex justify-between text-xs text-sand-400 mt-1">
-                    <span>1 day</span>
-                    <span>30 days</span>
-                  </div>
+                <Slider
+                  aria-labelledby="duration-label"
+                  value={duration}
+                  onChange={(_, value) => setDuration(value as number)}
+                  min={1}
+                  max={30}
+                  sx={{ color: "#53744c" }}
+                />
+                <div className="flex justify-between form-hint">
+                  <span>A day away</span>
+                  <span>A month of possibilities</span>
                 </div>
-
-                {/* Grid of selects */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Budget */}
-                  <div>
-                    <label className="flex items-center gap-2 text-sand-700 font-semibold mb-3">
-                      <DollarSign className="w-5 h-5 text-primary-500" />
-                      Budget
-                    </label>
-                    <select value={budget} onChange={(e) => setBudget(e.target.value)} className="input py-3" required>
-                      {budgets.map(option => <option key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>)}
-                    </select>
-                  </div>
-
-                  {/* Climate */}
-                  <div>
-                    <label className="flex items-center gap-2 text-sand-700 font-semibold mb-3">
-                      <Globe className="w-5 h-5 text-primary-500" />
-                      Climate
-                    </label>
-                    <select value={climate} onChange={(e) => setClimate(e.target.value)} className="input py-3">
-                      {climates.map(option => <option key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>)}
-                    </select>
-                  </div>
-
-                  {/* Destination Type */}
-                  <div>
-                    <label className="flex items-center gap-2 text-sand-700 font-semibold mb-3">
-                      <MapPin className="w-5 h-5 text-primary-500" />
-                      Type
-                    </label>
-                    <select value={destinationType} onChange={(e) => setDestinationType(e.target.value)} className="input py-3">
-                      {destinationTypes.map(option => <option key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>)}
-                    </select>
-                  </div>
-
-                  {/* Travel Style */}
-                  <div>
-                    <label className="flex items-center gap-2 text-sand-700 font-semibold mb-3">
-                      <Users className="w-5 h-5 text-primary-500" />
-                      Travel Style
-                    </label>
-                    <select value={travelStyle} onChange={(e) => setTravelStyle(e.target.value)} className="input py-3">
-                      {travelStyles.map(option => <option key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1)}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Interests - Pill chips style */}
-                <div>
-                  <label className="flex items-center gap-2 text-sand-700 font-semibold mb-3">
-                    <Heart className="w-5 h-5 text-primary-500" />
-                    Your Interests
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {interestOptions.map(interest => (
-                      <button
-                        key={interest}
-                        type="button"
-                        onClick={() => toggleInterest(interest)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                          interests.includes(interest)
-                            ? 'bg-primary-500 text-white shadow-md'
-                            : 'bg-sand-100 text-sand-600 hover:bg-primary-50 hover:text-primary-600'
-                        }`}
-                      >
-                        {interest}
-                      </button>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-x-5 gap-y-6 mb-7">
+                <div className="travel-field">
+                  <label htmlFor="trip-budget">Budget</label>
+                  <select
+                    id="trip-budget"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    className="travel-input"
+                  >
+                    {budgets.map((value) => (
+                      <option key={value} value={value}>
+                        {titleCase(value)}
+                      </option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-
-                {/* Generate Button */}
-                <button
-                  type="submit"
-                  disabled={isGenerating}
-                  className="w-full py-4 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-secondary-600 transition-all shadow-warm-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ring-1 ring-white/20 ring-inset group"
-                >
-                  {isGenerating ? (
-                    <><Loader className="w-5 h-5 animate-spin" /> Generating your adventure...</>
-                  ) : (
-                    <><Wand2 className="w-5 h-5" /> Generate Itinerary <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Sidebar - Status & Preview */}
-          <div className="space-y-6">
-            {/* Vector Pipeline Status 
-            <div className="bg-white rounded-2xl shadow-warm p-6 border border-sand-100">
-              <div className="flex items-center gap-2 font-semibold text-sand-800 mb-3">
-                <Database className="w-5 h-5 text-primary-500" />
-                Vector Pipeline
+                <div className="travel-field">
+                  <label htmlFor="trip-climate">Climate</label>
+                  <select
+                    id="trip-climate"
+                    value={climate}
+                    onChange={(e) => setClimate(e.target.value)}
+                    className="travel-input"
+                  >
+                    {climates.map((value) => (
+                      <option key={value} value={value}>
+                        {value === "any" ? "Any climate" : titleCase(value)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="travel-field">
+                  <label htmlFor="trip-type">The setting</label>
+                  <select
+                    id="trip-type"
+                    value={destinationType}
+                    onChange={(e) => setDestinationType(e.target.value)}
+                    className="travel-input"
+                  >
+                    {destinationTypes.map((value) => (
+                      <option key={value} value={value}>
+                        {value === "any" ? "Surprise me" : titleCase(value)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="travel-field">
+                  <label htmlFor="trip-style">Travel style</label>
+                  <select
+                    id="trip-style"
+                    value={travelStyle}
+                    onChange={(e) => setTravelStyle(e.target.value)}
+                    className="travel-input"
+                  >
+                    {travelStyles.map((value) => (
+                      <option key={value} value={value}>
+                        {titleCase(value)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-sand-500">Status</span>
-                <button
-                  type="button"
-                  onClick={validatePipeline}
-                  disabled={isValidatingPipeline}
-                  className="px-3 py-1.5 text-sm font-medium rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors disabled:opacity-50"
-                >
-                  {isValidatingPipeline ? 'Checking...' : 'Validate'}
-                </button>
-              </div>
-              {pipelineStatus ? (
-                <div className="flex items-center gap-2 text-sm text-forest-700 bg-forest-50 p-3 rounded-lg">
-                  <CheckCircle className="w-4 h-4" />
-                  {pipelineStatus}
+              <fieldset className="form-section">
+                <legend>Make time for what you love</legend>
+                <p className="form-hint mb-4">
+                  Select the things you'd happily spend a day doing.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {interestOptions.map((interest) => (
+                    <button
+                      key={interest}
+                      type="button"
+                      className="travel-choice px-3"
+                      aria-pressed={interests.includes(interest)}
+                      onClick={() => toggleInterest(interest)}
+                    >
+                      <InterestIcon interest={interest} />
+                      {interest}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <p className="text-sm text-sand-400">Verify vector store is ready</p>
-              )}
-            </div>
-              */}
-            {/* Generation Status */}
-            {isGenerating && (
-              <div className="bg-white rounded-2xl shadow-warm p-6 border border-sand-100 text-center">
-                <div className="inline-block p-4 bg-primary-50 rounded-full mb-4 animate-pulse">
-                  <Sparkles className="w-10 h-10 text-primary-500" />
-                </div>
-                <h3 className="font-serif text-xl font-bold text-sand-800 mb-2">Creating Your Trip</h3>
-                <p className="text-sand-500 text-sm">AI is searching destinations and crafting your day-by-day itinerary...</p>
-              </div>
-            )}
-
-            {error && (
-              <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
-                <div className="flex items-center gap-2 text-red-700 font-semibold mb-2">
-                  <AlertCircle className="w-5 h-5" />
-                  Generation Failed
-                </div>
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
-
-            {generatedItinerary && !isGenerating && (
-              <div className="bg-white rounded-2xl shadow-warm p-6 border border-sand-100">
-                <div className="bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-xl p-4 mb-4 ring-1 ring-white/20 ring-inset">
-                  <h3 className="font-serif text-lg font-bold mb-1">{generatedItinerary.title}</h3>
-                  <p className="text-white/90 text-sm line-clamp-2">{generatedItinerary.summary}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-sm mb-4">
-                  <div className="bg-sand-50 p-3 rounded-lg">
-                    <p className="text-sand-400 text-xs">Destination</p>
-                    <p className="font-semibold text-sand-800">{generatedItinerary.destination_name}</p>
-                  </div>
-                  <div className="bg-sand-50 p-3 rounded-lg">
-                    <p className="text-sand-400 text-xs">Duration</p>
-                    <p className="font-semibold text-sand-800">{generatedItinerary.duration_days} days</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate(`/itineraries/${generatedItinerary.id}`)}
-                  className="w-full py-3 bg-sand-800 text-white rounded-lg font-medium hover:bg-sand-900 transition-colors flex items-center justify-center gap-2"
-                >
-                  View Full Itinerary <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            {!isGenerating && !error && !generatedItinerary && (
-              <div className="bg-white rounded-2xl shadow-warm p-6 border border-sand-100 text-center">
-                <div className="inline-block p-3 bg-sand-100 rounded-full mb-3">
-                  <Sparkles className="w-8 h-8 text-sand-400" />
-                </div>
-                <h3 className="font-serif text-lg font-semibold text-sand-800 mb-1">Ready to Generate</h3>
-                <p className="text-sand-500 text-sm">Fill out the form and let AI craft your perfect trip.</p>
-              </div>
-            )}
-          </div>
+              </fieldset>
+              <button
+                type="submit"
+                disabled={isGenerating}
+                className="travel-button w-full"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader size={18} className="animate-spin" />
+                    Putting your trip together…
+                  </>
+                ) : (
+                  <>
+                    Make my travel plan
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
+            </fieldset>
+          </form>
         </div>
+        <aside
+          ref={resultPanel}
+          tabIndex={-1}
+          aria-label="Your travel plan"
+          className="lg:sticky lg:top-24 space-y-6 scroll-mt-24 focus:outline-none"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {error && (
+            <div role="alert" className="travel-error">
+              <AlertCircle size={18} className="shrink-0 mt-1" />
+              <div>
+                <p className="font-bold mb-1">A little detour</p>
+                {error}
+              </div>
+            </div>
+          )}
+          {generatedItinerary && !isGenerating ? (
+            <article className="photo-card">
+              <div className="relative overflow-hidden">
+                <img src={resultPhoto} alt="" className="photo-card-image" />
+                <span className="photo-card-badge">Your plan is ready</span>
+              </div>
+              <div className="photo-card-body">
+                <p className="travel-eyebrow text-[#7e8c6b] mb-3">
+                  {generatedItinerary.destination_name}
+                </p>
+                <h2>{generatedItinerary.title}</h2>
+                <p className="mt-3 line-clamp-4">
+                  {generatedItinerary.summary}
+                </p>
+                <p className="mt-5 border-t border-[#dfe2d3] pt-4">
+                  {generatedItinerary.duration_days} days ·{" "}
+                  {titleCase(generatedItinerary.budget)} budget
+                </p>
+                <button
+                  onClick={() =>
+                    navigate(`/itineraries/${generatedItinerary.id}`)
+                  }
+                  className="travel-button w-full mt-5"
+                >
+                  Open my itinerary
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </article>
+          ) : (
+            <>
+              <figure className="postcard rotate-2 mx-2">
+                <img
+                  src={travelPhotos.lake}
+                  alt="A wooden boat facing a mountain lake"
+                  loading="lazy"
+                />
+                <figcaption>Oh, the places you'll go.</figcaption>
+              </figure>
+              <div className="journey-note">
+                <p className="travel-eyebrow text-[#748563] mb-3">
+                  {isGenerating
+                    ? "A good trip takes a little thought"
+                    : "Room for a little spontaneity"}
+                </p>
+                <p>
+                  {isGenerating
+                    ? "Finding a destination and putting together your days. Your plan will appear here when it’s ready."
+                    : "Your itinerary is a starting point. Swap a busy afternoon for a long lunch. Take the detour. Make the trip yours."}
+                </p>
+                {isGenerating && (
+                  <div
+                    role="status"
+                    className="flex gap-3 items-center text-sm text-[#4f6b43] mt-5"
+                  >
+                    <Loader size={17} className="animate-spin" />
+                    Planning your {duration}-day escape…
+                  </div>
+                )}
+              </div>
+              <Link to="/preferences" className="travel-text-link">
+                Fine-tune your travel style
+                <ArrowRight size={16} />
+              </Link>
+            </>
+          )}
+        </aside>
       </div>
     </div>
   );

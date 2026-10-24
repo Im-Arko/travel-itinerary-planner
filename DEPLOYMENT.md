@@ -1,188 +1,51 @@
-# Travel Itinerary Planner - Docker Deployment Guide
+# Travellant deployment
 
-## Quick Start
+Use Python 3.12 and a maintained MariaDB/MySQL server. The frontend uses Node.js and Vite.
 
-### Prerequisites
-- Docker & Docker Compose installed
-- Git (optional)
+The current local database has already been migrated, indexed and restricted. The native API runs on port 8001; see [local database notes](backend/LOCAL_DATABASE.md). The local `.env` points the frontend to that API.
 
-### 1. Clone and Setup
-```bash
-cd travel-itinerary-planner
-```
+## Upgrade an existing installation
 
-### 2. Environment Configuration
+1. Back up the database and pause API writes. Keep the old Chroma volume as a rollback backup.
+2. Create a fresh Python environment and install `backend/requirements.txt`. Do not reuse the old environment: it retains removed vulnerable packages.
+3. Copy `backend/.env.example` to an untracked `backend/.env`, or configure equivalent environment variables. Preserve your real database connection details.
+4. From `backend`, run `python harden_database.py` with migration credentials. It prints counts and a change plan, without personal records. Resolve any reported duplicates or invalid values; the script never deletes or rewrites user data.
+5. Run `python harden_database.py --apply` during the maintenance window. It adds constraints, indexes, shared rate-limit storage and destination embedding storage. MariaDB DDL commits implicitly; take a backup first. The migration is rerunnable after a partial DDL failure.
+6. Use `python seed_destinations.py` to populate the destination embedding index. Existing destination rows are preserved unless you explicitly request `--clear`. First use downloads the configured embedding model. Models must support safetensors; remote model code is disabled.
+7. Restore the restricted runtime database credentials and start the API. Build/deploy the frontend with `npm ci` and `npm run build`.
 
-The project includes two environment file options:
+The API will return 503 for authentication if the rate-limit table has not been created. It does not bypass request protection when the database is unavailable. Existing access tokens are intentionally invalidated by the stricter claim requirements. Users must sign in again; legacy bcrypt passwords upgrade to Argon2id on successful login. New passwords require 12–128 characters.
 
-- `backend/.env` - For local development (non-Docker)
-- `backend/.env.docker` - For Docker Compose (recommended for deployment)
+Semantic search now stores JSON embeddings in MariaDB/MySQL. Chroma is no longer installed or served. The old embedding files and `chroma_doc_id` column are preserved for rollback but are unused. Cosine search scans the filtered destination catalog; a larger catalog should use an indexed database vector extension.
 
-**Important**: Update the values in `backend/.env.docker` before deploying:
-- `GOOGLE_API_KEY`: Your actual Google AI API key
-- `SECRET_KEY`: Generate a strong random secret key for JWT signing
+## Production configuration
 
-### 3. Deploy with Docker Compose
+- `APP_ENV=production`
+- A unique random `SECRET_KEY` of at least 32 characters. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+- `CORS_ORIGINS`: exact HTTPS frontend origins, separated by commas.
+- `TRUSTED_HOSTS`: exact API hostnames, separated by commas.
+- `DB_SSL_CA`: the mounted database CA file. Certificate and hostname verification are enabled. Production refuses root database accounts, missing passwords and missing TLS configuration.
+- `ADMIN_USER_IDS`: existing user IDs authorized to ingest destinations. Empty means no API user can ingest. Registration and JWT claims cannot grant administrator privileges.
+- `USE_MOCK_LLM=true` by default. Set false and supply `OPENAI_API_KEY` for real generation.
+- Set frontend `VITE_API_URL` to the HTTPS API origin.
 
-From the project root directory:
+Terminate HTTPS at the ingress. The Docker command disables forwarded-header trust. If deploying behind a proxy, configure the server to trust forwarded headers only from the actual proxy IPs; otherwise users share the proxy's IP rate limit. Never trust every client-supplied forwarding header.
 
-```bash
-# Build and start all services
-docker-compose -f backend/docker-compose.yml up -d
+Use separate database accounts for migrations and runtime. Runtime needs SELECT/INSERT/UPDATE/DELETE on application tables only, including `security_rate_limits` and `destination_embeddings`. It should have no global privileges, GRANT OPTION, FILE, PROCESS, CREATE, ALTER or DROP. Restrict its source host and require TLS. The audit prints permission scopes and TLS status so an operator can check these on the real server.
 
-# View logs
-docker-compose -f backend/docker-compose.yml logs -f
+## Containers
 
-# Stop services
-docker-compose -f backend/docker-compose.yml down
+Run `docker compose -f backend/docker-compose.yml up --build -d` after configuring the untracked `backend/.env.docker`. This compose file connects to an existing database; it does not start one.
 
-# Stop and remove volumes (WARNING: deletes data)
-docker-compose -f backend/docker-compose.yml down -v
-```
+The image runs as an unprivileged user, excludes environment files and logs, and uses a persistent model cache. Supply the database CA with a read-only mount in production. Migrations and seeding are explicit operator steps and do not run automatically under the runtime account.
 
-### 4. Access Services
+## Verification
 
-- **Backend API**: http://localhost:8000
-  - API Docs (Swagger): http://localhost:8000/docs
-  - Health Check: http://localhost:8000/health
-- **Database**: MariaDB on port 3306
-  - Host: localhost
-  - Database: travel_app
-  - User: travel_user
-  - Password: your_secure_password (change in production)
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+- `npm audit`
+- `python -m unittest discover -s backend/tests -v` from the repository root, using the new Python environment.
+- `python -m pip_audit` in a clean environment with the full runtime requirements installed.
 
-## Architecture
-
-### Services
-
-1. **db** (MariaDB 11.4)
-   - Persistent storage for user data, preferences, itineraries
-   - Auto-initialized with schema from `backend/app/database/schema.sql`
-   - Health-checked before backend starts
-
-2. **backend** (FastAPI)
-   - Python 3.11-slim based image
-   - Exposes REST API on port 8000
-   - Connects to MariaDB via Docker network
-   - ChromaDB persisted in Docker volume
-
-### Networking
-
-All services connect to a custom bridge network `travel-network` for secure inter-service communication.
-
-### Volumes
-
-- `db_data`: Persistent MariaDB data
-- `chroma_data`: Persistent ChromaDB vector store
-
-## Environment Variables
-
-### Database (MariaDB)
-| Variable | Default | Description |
-|----------|---------|-------------|
-| MYSQL_ROOT_PASSWORD | rootpassword | Root user password |
-| MYSQL_DATABASE | travel_app | Database name |
-| MYSQL_USER | travel_user | Application user |
-| MYSQL_PASSWORD | your_secure_password | Application user password |
-| DB_PORT | 3306 | Host port mapping |
-
-### Backend
-| Variable | Default | Description |
-|----------|---------|-------------|
-| BACKEND_PORT | 8000 | Host port mapping |
-| DB_HOST | db | Database hostname (Docker service name) |
-| DB_PORT | 3306 | Database port |
-| DB_NAME | travel_app | Database name |
-| DB_USER | travel_user | Database user |
-| DB_PASSWORD | your_secure_password | Database password |
-| LLM_PROVIDER | google | LLM provider (google, openai, grok, liteapi, mock) |
-| USE_MOCK_LLM | true | Use mock LLM for testing |
-| GOOGLE_API_KEY | (see .env) | Google AI API key |
-| GOOGLE_MODEL | gemini-2.5-flash | Gemini model |
-| SECRET_KEY | (change in production) | JWT signing secret |
-| CHROMA_PERSIST_DIR | /app/chroma_db | ChromaDB persistence directory |
-
-## Production Considerations
-
-### Security
-1. **Change all default passwords** in `.env.docker`
-2. **Generate strong SECRET_KEY**: Use `openssl rand -hex 32`
-3. **Use HTTPS**: Set up reverse proxy (nginx/Traefik) with SSL
-4. **Restrict database port**: Only expose if needed externally
-
-### Performance
-1. **Database**: Consider increasing buffer pool size in MariaDB config
-2. **Backend**: Increase worker count in production (remove `--reload`)
-3. **ChromaDB**: Ensure sufficient volume storage for embeddings
-
-### Monitoring
-- Check logs: `docker-compose logs -f [service]`
-- Health endpoints: `GET /health` on backend
-- Database: Connect to MariaDB and monitor query performance
-
-### Backup Strategy
-
-#### Database Backup
-```bash
-docker exec travel_db mysqldump -utravel_user -pyour_secure_password travel_app > backup.sql
-```
-
-#### ChromaDB Backup
-```bash
-docker run --rm -v travel-itinerary-planner_chroma_data:/data -v $(pwd):/backup alpine tar czf /backup/chroma_backup.tar.gz -C /data .
-```
-
-## Troubleshooting
-
-### Backend can't connect to database
-- Check if database is healthy: `docker-compose ps db`
-- Verify network: `docker network inspect travel-itinerary-planner_travel-network`
-- Check logs: `docker-compose logs db`
-
-### ChromaDB errors
-- Ensure `chroma_data` volume exists and has permissions
-- Check backend logs for embedding model download issues
-
-### Port conflicts
-- Change ports in `.env.docker` (DB_PORT, BACKEND_PORT)
-- Or modify docker-compose.yml port mappings
-
-## Frontend Integration
-
-Since the frontend is deployed separately, configure the frontend's environment to point to the backend API:
-
-- Development: `VITE_API_URL=http://localhost:8000`
-- Production: `VITE_API_URL=https://your-backend-domain.com`
-
-Update CORS origins in `backend/app/config.py` if needed.
-
-## Development vs Production
-
-### Development (Current)
-- Uses mock LLM by default (no API costs)
-- Auto-reload enabled
-- Verbose SQL logging
-
-### Production
-- Set `USE_MOCK_LLM=false` in `.env.docker`
-- Disable reload in docker-compose command
-- Use stronger passwords and secrets
-- Consider adding nginx reverse proxy
-- Set up CI/CD pipeline with multi-stage builds
-
-## Updating Dependencies
-
-### Backend
-1. Update `backend/requirements.txt`
-2. Rebuild: `docker-compose -f backend/docker-compose.yml build --no-cache backend`
-
-### Database Schema Changes
-1. Update `backend/app/database/schema.sql`
-2. Recreate database: `docker-compose -f backend/docker-compose.yml down -v && docker-compose -f backend/docker-compose.yml up -d`
-
-## Support
-
-For issues or questions, check:
-- Backend logs: `docker-compose logs backend`
-- Database logs: `docker-compose logs db`
-- API documentation: http://localhost:8000/docs when running
+The security unit tests use an isolated SQLite database and stub model inference/provider calls. To verify the migrated live database without retaining changes, run `python verify_database.py` from `backend`. To check the running local API with a disposable account, run `python smoke_local_backend.py --base-url http://127.0.0.1:8001`; it removes its account and generated records afterward. Do not run those two live checks concurrently. The latest saved audit evidence and verification limits are in `SECURITY_REVIEW.md`.

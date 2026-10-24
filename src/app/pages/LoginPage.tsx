@@ -1,75 +1,69 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { errorMessage } from '../utils/formatters';
-import { Mail, Lock, Plane, Eye, EyeOff } from 'lucide-react';
-
-const BG =
-  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1400&q=80&auto=format&fit=crop';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { errorMessage } from "../utils/formatters";
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { travelPhotos } from "../components/TravelHero";
 
 export function LoginPage() {
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [showPw, setShowPw]     = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError]       = useState('');
+  const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
     try {
       await login(email, password);
-      navigate('/destinations');
+      navigate("/destinations");
     } catch (err) {
-      setError(errorMessage(err, 'Invalid credentials. Please try again.'));
+      setError(errorMessage(err, "Invalid credentials. Please try again."));
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
-    <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
-      {/* ── Left: form ── */}
-      <div className="flex flex-col items-center justify-center px-8 py-16 bg-sand-50">
-        <Link to="/" className="flex items-center gap-2 mb-12 group">
-          <div className="w-9 h-9  rounded-xl flex items-center justify-center shadow-warm">
-            <img
-              src="/favicon.png"
-              alt="Logo"
-              className="
-                relative z-10
-                w-7 h-7 object-contain
-                transition-all duration-300
-                [filter:drop-shadow(0_0_8px_#D04B42)]
-                hover:[filter:drop-shadow(0_0_16px_#D04B42)]
-                "
-            />
-          </div>
-          <span className="font-serif text-2xl font-bold text-sand-800 italic">
-            Travellant
-          </span>
-        </Link>
-
-        <div className="w-full max-w-sm">
-          <h1 className="font-serif text-4xl font-bold text-sand-800 mb-2">Welcome back</h1>
-          <p className="text-sand-400 font-sans text-sm mb-10">
-            Continue your journey where you left off.
+    <div className="auth-scene">
+      <img src={travelPhotos.lake} alt="" />
+      <div className="auth-shade" />
+      <div className="travel-container auth-layout">
+        <div className="auth-editorial">
+          <p className="travel-eyebrow text-[#e7dfc8]">Your next chapter</p>
+          <h2>
+            Good to have
+            <br />
+            you back.
+          </h2>
+          <p className="font-script">There's more out there.</p>
+          <p>
+            The places you've saved. The plans you've made. Pick up where you
+            left off and see where the next road takes you.
           </p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="mt-12 hidden md:flex items-center gap-4 text-[.65rem] uppercase tracking-[.18em] text-[#f0e9d7]">
+            <span className="h-px w-12 bg-[#e0d7ba]" />A little inspiration, a
+            lot of possibility
+          </div>
+        </div>
+        <div className="auth-panel">
+          <p className="travel-eyebrow text-[#8a7350]">The travel journal</p>
+          <h1>Welcome back</h1>
+          <p className="form-hint mb-6">
+            Sign in to your saved places and travel plans.
+          </p>
+          <form onSubmit={handleSubmit}>
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+              <p role="alert" className="travel-error">
                 {error}
               </p>
             )}
-
-            <div>
-              <label className="label" htmlFor="email">Email address</label>
+            <div className="travel-field">
+              <label htmlFor="email">Email address</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-300 pointer-events-none" />
+                <Mail className="auth-input-icon" />
                 <input
                   id="email"
                   type="email"
@@ -77,78 +71,54 @@ export function LoginPage() {
                   autoComplete="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="input pl-10"
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="travel-input"
                 />
               </div>
             </div>
-
-            <div>
-              <label className="label" htmlFor="password">Password</label>
+            <div className="travel-field">
+              <label htmlFor="password">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-300 pointer-events-none" />
+                <Lock className="auth-input-icon" />
                 <input
                   id="password"
-                  type={showPw ? 'text' : 'password'}
+                  type={showPw ? "text" : "password"}
                   required
                   autoComplete="current-password"
-                  placeholder="••••••••"
+                  placeholder="Your password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="input pl-10 pr-10"
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="travel-input pr-12"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sand-300 hover:text-sand-500 transition-colors"
-                  tabIndex={-1}
+                  onClick={() => setShowPw(!showPw)}
+                  className="auth-password-toggle"
+                  aria-label={showPw ? "Hide password" : "Show password"}
+                  aria-pressed={showPw}
                 >
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
             </div>
-             
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full py-3.5 text-base rounded-xl mt-2 disabled:opacity-60 disabled:cursor-not-allowed
-              
-                        group inline-flex items-center justify-center gap-2
-                         bg-primary-500
-                        px-5  font-semibold text-white
-                        shadow-warm-xl
-                        transition-all duration-300
-                        hover:bg-primary-600
-                        hover:-translate-y-1
-                        hover:shadow-2xl
-                      "
+              className="travel-button"
             >
-              {isLoading ? 'Signing in…' : 'Sign in'}
+              {isLoading ? "Signing in…" : "Sign in"}
+              <ArrowRight size={17} />
             </button>
           </form>
-
-          <p className="text-center text-sm text-sand-400 mt-8">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary-500 font-medium hover:text-primary-600 transition-colors">
-              Sign up free
+          <p className="auth-footer">
+            New here?{" "}
+            <Link
+              to="/register"
+              className="font-bold text-[#355347] underline underline-offset-4"
+            >
+              Start your travel journal
             </Link>
           </p>
-        </div>
-      </div>
-
-      {/* ── Right: photo ── */}
-      <div className="hidden lg:block relative overflow-hidden">
-        <img
-          src={BG}
-          alt="Travel"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/55" />
-        <div className="absolute bottom-12 left-12 right-12 text-white">
-          <p className="font-serif text-3xl font-semibold italic leading-snug">
-            "The world is a book, and those who do not travel read only one page."
-          </p>
-          <p className="font-sans text-sm text-white/55 mt-4">- Saint Augustine</p>
         </div>
       </div>
     </div>

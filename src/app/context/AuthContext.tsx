@@ -15,13 +15,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem(USER_KEY);
-    return stored ? JSON.parse(stored) as User : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(Boolean(getAccessToken()));
 
   useEffect(() => {
+    localStorage.removeItem(USER_KEY);
     if (!getAccessToken()) {
       setLoading(false);
       return;
@@ -31,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi.me()
       .then(currentUser => {
         if (cancelled) return;
-        localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
         setUser(currentUser);
       })
       .catch(() => {
@@ -52,7 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = await authApi.login(email, password);
     setAccessToken(token.access_token);
     const currentUser = await authApi.me();
-    localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
     setUser(currentUser);
   };
 

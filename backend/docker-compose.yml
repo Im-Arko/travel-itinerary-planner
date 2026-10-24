@@ -1,28 +1,4 @@
 services:
-  # # ── MariaDB ─────────────────────────────────────────────────
-  # db:
-  #   image: mariadb:11.4
-  #   container_name: travel_db
-  #   restart: unless-stopped
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
-  #     MYSQL_DATABASE: ${MYSQL_DATABASE:-travel_app}
-  #     MYSQL_USER: ${MYSQL_USER:-travel_user}
-  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-your_secure_password}
-  #   ports:
-  #     - "${DB_PORT:-3306}:3306"
-  #   volumes:
-  #     - db_data:/var/lib/mysql
-  #     - ./app/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
-  #   healthcheck:
-  #     test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   networks:
-  #     - travel-network
-
-  # ── FastAPI Backend ──────────────────────────────────────────
   backend:
     build:
       context: .
@@ -31,29 +7,17 @@ services:
     restart: unless-stopped
     env_file: ./.env.docker
     environment:
-      # DB_HOST: ${DB_HOST}
-      # DB_PORT: ${DB_PORT}
-      # DB_NAME: ${DB_NAME}
-      # DB_USER: ${DB_USER}
-      # DB_PASSWORD: ${DB_PASSWORD}
-      CHROMA_PERSIST_DIR: /app/chroma_db
+      HF_HOME: /app/model_cache
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     volumes:
-      - chroma_data:/app/chroma_db
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-    # networks:
-    #   - travel-network
+      - model_cache:/app/model_cache
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-proxy-headers --limit-concurrency 100
 
 volumes:
-  # db_data:
-  #   driver: local
-  chroma_data:
+  model_cache:
     driver: local
-
-# networks:
-#   travel-network:
-#     driver: bridge

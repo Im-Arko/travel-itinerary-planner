@@ -47,3 +47,8 @@ backend/.env
 replacements.txt
 travellant.sql
 backend/.env.docker
+backend/.security-venv/
+backend/.local-backups/
+backend/.local-database-tls/
+token.txt
+npm-audit.json
