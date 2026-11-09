@@ -5,6 +5,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from sqlalchemy import literal, select
+from sqlalchemy.exc import SQLAlchemyError
+from .database.models import Base
+from .database.session import engine
 from .config import get_settings
 from .security import RequestProtection
 from .routers import auth, preferences, destinations, itineraries
@@ -48,6 +52,18 @@ app.include_router(itineraries.router)
 @app.get("/health", tags=["System"])
 def health():
     return {"status": "ok"}
+
+
+@app.get("/ready", tags=["System"])
+def ready():
+    try:
+        with engine.connect() as connection:
+            # Check the required schema and read access without returning records.
+            for table in Base.metadata.sorted_tables:
+                connection.execute(select(literal(1)).select_from(table).limit(0))
+    except SQLAlchemyError:
+        return JSONResponse(status_code=503, content={"status": "degraded", "database": "unavailable"})
+    return {"status": "ok", "database": "available"}
 
 
 @app.get("/", tags=["System"])

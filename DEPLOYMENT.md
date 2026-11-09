@@ -1,10 +1,12 @@
 # Travellant deployment
 
-Use Python 3.12 and a maintained MariaDB/MySQL server. The frontend uses Node.js and Vite.
+Use Python 3.12 and PostgreSQL 16+ or a maintained MariaDB/MySQL server. The frontend uses Node.js and Vite. The hosted deployment uses Supabase PostgreSQL; local MariaDB remains supported.
 
 The current local database has already been migrated, indexed and restricted. The native API runs on port 8001; see [local database notes](backend/LOCAL_DATABASE.md). The local `.env` points the frontend to that API.
 
 ## Upgrade an existing installation
+
+For the hosted PostgreSQL database, follow [the Supabase migration instructions](backend/SUPABASE_MIGRATION.md). The steps below apply to MariaDB/MySQL.
 
 1. Back up the database and pause API writes. Keep the old Chroma volume as a rollback backup.
 2. Create a fresh Python environment and install `backend/requirements.txt`. Do not reuse the old environment: it retains removed vulnerable packages.
@@ -16,7 +18,7 @@ The current local database has already been migrated, indexed and restricted. Th
 
 The API will return 503 for authentication if the rate-limit table has not been created. It does not bypass request protection when the database is unavailable. Existing access tokens are intentionally invalidated by the stricter claim requirements. Users must sign in again; legacy bcrypt passwords upgrade to Argon2id on successful login. New passwords require 12–128 characters.
 
-Semantic search now stores JSON embeddings in MariaDB/MySQL. Chroma is no longer installed or served. The old embedding files and `chroma_doc_id` column are preserved for rollback but are unused. Cosine search scans the filtered destination catalog; a larger catalog should use an indexed database vector extension.
+Semantic search stores JSON embeddings in the application database. Chroma is no longer installed or served. The old embedding files and `chroma_doc_id` column are preserved for rollback but are unused. Cosine search scans the filtered destination catalog; a larger catalog should use an indexed database vector extension.
 
 ## Production configuration
 
@@ -24,7 +26,8 @@ Semantic search now stores JSON embeddings in MariaDB/MySQL. Chroma is no longer
 - A unique random `SECRET_KEY` of at least 32 characters. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
 - `CORS_ORIGINS`: exact HTTPS frontend origins, separated by commas.
 - `TRUSTED_HOSTS`: exact API hostnames, separated by commas.
-- `DB_SSL_CA`: the mounted database CA file. Certificate and hostname verification are enabled. Production refuses root database accounts, missing passwords and missing TLS configuration.
+- PostgreSQL: set `DATABASE_URL` to the session pooler connection for the dedicated runtime role, with `sslmode=verify-full`, and `DB_SCHEMA=travellant`. Supabase's public root certificate is bundled in the image. See [the Supabase notes](backend/SUPABASE_MIGRATION.md).
+- MariaDB/MySQL: set `DB_SSL_CA` to the mounted database CA file. Certificate and hostname verification are enabled. Production refuses root database accounts, missing passwords and missing TLS configuration.
 - `ADMIN_USER_IDS`: existing user IDs authorized to ingest destinations. Empty means no API user can ingest. Registration and JWT claims cannot grant administrator privileges.
 - `USE_MOCK_LLM=true` by default. Set false and supply `OPENAI_API_KEY` for real generation.
 - Set frontend `VITE_API_URL` to the HTTPS API origin.

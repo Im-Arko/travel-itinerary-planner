@@ -1,9 +1,10 @@
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Text, DateTime, Boolean,
-    Enum, ForeignKey, DECIMAL, SmallInteger, JSON, CheckConstraint, UniqueConstraint, Index
+    Enum, ForeignKey, DECIMAL, SmallInteger, JSON, CheckConstraint, UniqueConstraint, Index, column, or_
 )
 from sqlalchemy.orm import declarative_base, relationship
+from .types import JsonValid
 
 Base = declarative_base()
 
@@ -30,14 +31,14 @@ class UserPreference(Base):
     __table_args__ = (
         UniqueConstraint("user_id", name="uq_preferences_user"),
         CheckConstraint("trip_duration IS NOT NULL AND trip_duration BETWEEN 1 AND 30", name="ck_pref_duration"),
-        CheckConstraint("interests IS NULL OR JSON_VALID(interests)", name="ck_pref_interests_json"),
+        CheckConstraint(or_(column("interests").is_(None), JsonValid(column("interests"))), name="ck_pref_interests_json"),
     )
 
     id                = Column(Integer, primary_key=True, autoincrement=True)
     user_id           = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    budget            = Column(Enum("budget", "moderate", "luxury"), default="moderate")
-    preferred_climate = Column(Enum("tropical", "temperate", "arid", "cold", "mediterranean", "any"), default="any")
-    destination_type  = Column(Enum("beach", "mountain", "city", "countryside", "adventure", "cultural", "any"), default="any")
+    budget            = Column(Enum("budget", "moderate", "luxury", native_enum=False, create_constraint=True, validate_strings=True), default="moderate")
+    preferred_climate = Column(Enum("tropical", "temperate", "arid", "cold", "mediterranean", "any", native_enum=False, create_constraint=True, validate_strings=True), default="any")
+    destination_type  = Column(Enum("beach", "mountain", "city", "countryside", "adventure", "cultural", "any", native_enum=False, create_constraint=True, validate_strings=True), default="any")
     trip_duration     = Column(SmallInteger, default=7)
     travel_style      = Column(String(50), default="solo")
     interests         = Column(Text)          # JSON array
@@ -57,9 +58,9 @@ class Destination(Base):
     country          = Column(String(100), nullable=False)
     continent        = Column(String(50))
     description      = Column(Text, nullable=False)
-    climate_type     = Column(Enum("tropical", "temperate", "arid", "cold", "mediterranean"), nullable=False)
-    destination_type = Column(Enum("beach", "mountain", "city", "countryside", "adventure", "cultural"), nullable=False)
-    budget_level     = Column(Enum("budget", "moderate", "luxury"), nullable=False)
+    climate_type     = Column(Enum("tropical", "temperate", "arid", "cold", "mediterranean", native_enum=False, create_constraint=True, validate_strings=True), nullable=False)
+    destination_type = Column(Enum("beach", "mountain", "city", "countryside", "adventure", "cultural", native_enum=False, create_constraint=True, validate_strings=True), nullable=False)
+    budget_level     = Column(Enum("budget", "moderate", "luxury", native_enum=False, create_constraint=True, validate_strings=True), nullable=False)
     best_months      = Column(String(100))
     avg_temp_c       = Column(DECIMAL(4, 1))
     tags             = Column(Text)           # JSON array
@@ -78,7 +79,7 @@ class Itinerary(Base):
     __table_args__ = (
         CheckConstraint("duration_days BETWEEN 1 AND 30", name="ck_itin_duration"),
         CheckConstraint("rating IS NULL OR rating BETWEEN 1 AND 5", name="ck_itin_rating"),
-        CheckConstraint("JSON_VALID(full_itinerary)", name="ck_itin_json"),
+        CheckConstraint(JsonValid(column("full_itinerary")), name="ck_itin_json"),
         Index("idx_itin_user_generated", "user_id", "generated_at"),
     )
 
@@ -88,11 +89,11 @@ class Itinerary(Base):
     title            = Column(String(255), nullable=False)
     destination_name = Column(String(150), nullable=False)
     duration_days    = Column(SmallInteger, nullable=False)
-    budget           = Column(Enum("budget", "moderate", "luxury"), nullable=False)
+    budget           = Column(Enum("budget", "moderate", "luxury", native_enum=False, create_constraint=True, validate_strings=True), nullable=False)
     travel_style     = Column(String(50))
     summary          = Column(Text)
     full_itinerary   = Column(Text, nullable=False)  # JSON
-    status           = Column(Enum("draft", "saved", "archived"), default="saved")
+    status           = Column(Enum("draft", "saved", "archived", native_enum=False, create_constraint=True, validate_strings=True), default="saved")
     is_favorite      = Column(Boolean, default=False)
     rating           = Column(SmallInteger)
     user_notes       = Column(Text)

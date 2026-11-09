@@ -2,15 +2,16 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from sqlalchemy.engine import URL
+from sqlalchemy.engine import URL, make_url
+from sqlalchemy.exc import ArgumentError
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parent.parent / ".env",
-        env_file_encoding="utf-8", extra="ignore",
+        env_file_encoding="utf-8", extra="ignore", populate_by_name=True,
     )
     db_host: str = "localhost"
     db_port: int = Field(3306, ge=1, le=65535)
@@ -18,6 +19,8 @@ class Settings(BaseSettings):
     db_user: str = "travel_user"
     db_password: str = ""
     db_ssl_ca: str | None = None
+    connection_url: SecretStr | None = Field(default=None, validation_alias="DATABASE_URL")
+    db_schema: str = Field("travellant", pattern=r"^[a-zA-Z_][a-zA-Z0-9_]*$")
     secret_key: str = Field(min_length=32)
     access_token_expire_minutes: int = Field(30, ge=1, le=60)
     algorithm: Literal["HS256"] = "HS256"
@@ -47,7 +50,18 @@ class Settings(BaseSettings):
                 raise ValueError("Production CORS origins must use HTTPS")
         if not self.trusted_hosts_list or "*" in self.trusted_hosts_list:
             raise ValueError("TRUSTED_HOSTS must list explicit hostnames")
-        if self.app_env == "production":
+        url = self.database_url
+        if url.get_backend_name() == "postgresql":
+            sslmode = url.query.get("sslmode", "verify-full")
+            local_test = self.app_env == "test" and url.host in ("localhost", "127.0.0.1", "::1")
+            if sslmode != "verify-full" and not local_test:
+                raise ValueError("PostgreSQL connections require sslmode=verify-full")
+            if self.app_env == "production" and (
+                not url.username or not url.password
+                or url.username.split(".")[0].lower() in ("postgres", "root", "supabase_admin")
+            ):
+                raise ValueError("Production PostgreSQL requires a dedicated runtime role and password")
+        elif self.app_env == "production":
             if self.db_user.lower() == "root" or not self.db_password or not self.db_ssl_ca:
                 raise ValueError("Production requires a non-root database user, password and DB_SSL_CA for verified TLS")
         self.admin_ids
@@ -55,6 +69,16 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> URL:
+        if self.connection_url:
+            try:
+                url = make_url(self.connection_url.get_secret_value())
+                if url.drivername not in ("postgres", "postgresql", "postgresql+psycopg"):
+                    raise ValueError()
+                if not url.host or not url.database:
+                    raise ValueError()
+                return url.set(drivername="postgresql+psycopg")
+            except (ArgumentError, ValueError, TypeError):
+                raise ValueError("DATABASE_URL must be a PostgreSQL connection URL") from None
         return URL.create("mysql+pymysql", username=self.db_user, password=self.db_password,
                           host=self.db_host, port=self.db_port, database=self.db_name)
 
