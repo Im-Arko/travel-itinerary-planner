@@ -11,6 +11,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..database.models import Destination, DestinationEmbedding
+from ..database.session import release_read_transaction
 
 settings = get_settings()
 _embedder = None
@@ -59,21 +60,26 @@ def ingest_destinations(db: Session, destination_ids: Optional[list[int]] = None
     destinations = query.order_by(Destination.id).all()
     if not destinations:
         return 0
+    documents = [(dest.id, _build_doc_text(dest)) for dest in destinations]
+    release_read_transaction(db)
     embedder = _get_embedder()
-    # Bounded batches avoid materializing the whole embedding matrix.
-    for offset in range(0, len(destinations), 64):
-        batch = destinations[offset:offset + 64]
-        vectors = embedder.encode([_build_doc_text(dest) for dest in batch],
+    encoded = []
+    # Keep inference outside the write transaction and bound model batch memory.
+    for offset in range(0, len(documents), 64):
+        batch = documents[offset:offset + 64]
+        vectors = embedder.encode([document for _, document in batch],
                                   show_progress_bar=False, normalize_embeddings=True)
-        for dest, values in zip(batch, vectors):
-            row = db.get(DestinationEmbedding, dest.id)
+        encoded.extend((destination_id, document, _validated_vector(values))
+                       for (destination_id, document), values in zip(batch, vectors))
+    try:
+        for destination_id, document, vector in encoded:
+            row = db.get(DestinationEmbedding, destination_id)
             if row is None:
-                row = DestinationEmbedding(destination_id=dest.id)
+                row = DestinationEmbedding(destination_id=destination_id)
                 db.add(row)
             row.model_name = settings.embedding_model
-            row.document = _build_doc_text(dest)
-            row.embedding = _validated_vector(values)
-    try:
+            row.document = document
+            row.embedding = vector
         db.commit()
     except Exception:
         db.rollback()
@@ -96,6 +102,10 @@ def semantic_search(
             query = query.filter(column == value)
     if query.first() is None:
         return []
+    # A cold model download can take longer than PostgreSQL's idle timeout.
+    # Authentication has already completed; return its read connection before
+    # loading/encoding, then let SQLAlchemy open a fresh transaction for results.
+    release_read_transaction(db)
     needle = _validated_vector(_get_embedder().encode(
         [query_text], show_progress_bar=False, normalize_embeddings=True
     )[0])

@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from ..database.session import get_db
+from ..database.session import get_db, release_read_transaction
 from ..database.models import User, Itinerary, ItineraryDay, Destination
 from ..schemas.schemas import (
     ItineraryGenerateRequest, ItineraryOut, ItineraryWithDays,
@@ -25,6 +25,7 @@ def generate_itinerary(
     db:           Session = Depends(get_db),
     current_user: User    = Depends(get_current_user),
 ):
+    user_id = current_user.id
     if db.query(Destination).count() == 0:
         raise HTTPException(
             status_code=503,
@@ -86,8 +87,10 @@ def generate_itinerary(
 
     best_match  = matches[0]
     dest_obj    = db.query(Destination).filter(Destination.id == best_match["destination_id"]).first()
+    destination_id = dest_obj.id if dest_obj else None
     dest_name   = best_match["name"]
     dest_ctx    = best_match["document"]
+    release_read_transaction(db)
 
     # 3. Generate itinerary with LLM
     try:
@@ -113,8 +116,8 @@ def generate_itinerary(
 
     # 4. Persist to DB
     itin = Itinerary(
-        user_id          = current_user.id,
-        destination_id   = dest_obj.id if dest_obj else None,
+        user_id          = user_id,
+        destination_id   = destination_id,
         title            = raw.get("title", f"{payload.trip_duration} Days in {dest_name}"),
         destination_name = raw.get("destination_name", dest_name),
         duration_days    = payload.trip_duration,

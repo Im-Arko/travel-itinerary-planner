@@ -207,15 +207,20 @@ class SecurityTests(unittest.TestCase):
     def test_database_embedding_search_and_reingestion(self):
         from backend.app.database.models import Destination, DestinationEmbedding
         from backend.app.schemas import vector_store
+        test = self
         class Embedder:
             def encode(self, texts, **kwargs):
+                test.assertFalse(test.db.in_transaction(), "Inference must not hold an idle database transaction")
                 return [[1.0, 0.0] if "beach" in value.lower() else [0.0, 1.0] for value in texts]
         self.db.add_all([
             Destination(name="Coast",country="Test",description="beach",climate_type="tropical",destination_type="beach",budget_level="budget"),
             Destination(name="Alps",country="Test",description="mountains",climate_type="cold",destination_type="mountain",budget_level="luxury"),
         ])
         self.db.commit()
-        with patch.object(vector_store,"_get_embedder",return_value=Embedder()):
+        def load_embedder():
+            self.assertFalse(self.db.in_transaction(), "Cold model loading must not hold a database connection")
+            return Embedder()
+        with patch.object(vector_store,"_get_embedder",side_effect=load_embedder):
             self.assertEqual(vector_store.ingest_destinations(self.db),2)
             self.assertEqual(vector_store.ingest_destinations(self.db),2)
             self.assertEqual(vector_store.collection_count(self.db),2)
@@ -227,6 +232,14 @@ class SecurityTests(unittest.TestCase):
         self.db.execute(text("DELETE FROM destinations WHERE name='Coast'")); self.db.commit()
         self.assertEqual(self.db.query(DestinationEmbedding).count(),1)
         with self.assertRaises(ValueError): vector_store._validated_vector([float("nan")])
+
+    def test_model_work_never_discards_pending_writes(self):
+        from backend.app.database.session import release_read_transaction
+        self.alice.full_name = "Pending change"
+        with self.assertRaises(RuntimeError):
+            release_read_transaction(self.db)
+        self.assertEqual(self.alice.full_name, "Pending change")
+        self.assertIn(self.alice, self.db.dirty)
 
     def test_settings_fail_closed(self):
         with self.assertRaises(ValueError): Settings(_env_file=None,secret_key="short")
