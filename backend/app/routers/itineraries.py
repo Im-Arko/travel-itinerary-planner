@@ -10,6 +10,7 @@ from ..schemas.schemas import (
     ItineraryUpdate, DayPlan,
 )
 from ..services.auth_service import get_current_user
+from ..services.destination_service import resolve_requested_destination, same_destination
 from ..schemas import vector_store, llm_service
 from ..security import generation_limit
 
@@ -26,6 +27,68 @@ def generate_itinerary(
     current_user: User    = Depends(get_current_user),
 ):
     user_id = current_user.id
+    requested_destination = resolve_requested_destination(db, payload.destination_hint)
+    if requested_destination:
+        best_match = requested_destination
+    else:
+        best_match = recommend_destination(db, payload)
+
+    destination_id = best_match["destination_id"]
+    dest_name = best_match["name"]
+    release_read_transaction(db)
+
+    # The selected place is fixed. Preferences shape the activities there.
+    try:
+        raw = llm_service.generate_itinerary(
+            destination=dest_name,
+            duration=payload.trip_duration,
+            budget=payload.budget,
+            travel_style=payload.travel_style,
+            climate=payload.preferred_climate,
+            dest_type=payload.destination_type,
+            interests=payload.interests,
+            dietary=None,
+            accessibility=False,
+            dest_context=best_match["document"],
+        )
+        raw = llm_service.ItineraryLLM.model_validate(raw).model_dump()
+        if [day["day_number"] for day in raw["days"]] != list(range(1, payload.trip_duration + 1)):
+            raise ValueError("Invalid day sequence")
+        if not same_destination(raw["destination_name"], dest_name, best_match["country"]):
+            raise ValueError("The provider changed the selected destination")
+        raw["destination_name"] = dest_name
+    except RuntimeError:
+        raise HTTPException(status_code=503, detail="Trip generation is temporarily unavailable") from None
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=502, detail="The trip provider returned an invalid itinerary") from None
+
+    itin = Itinerary(
+        user_id=user_id,
+        destination_id=destination_id,
+        title=raw["title"],
+        destination_name=dest_name,
+        duration_days=payload.trip_duration,
+        budget=payload.budget,
+        travel_style=payload.travel_style,
+        summary=raw["summary"],
+        full_itinerary=json.dumps(raw),
+        status="saved",
+    )
+    db.add(itin)
+    db.flush()
+    days_out = []
+    for day_data in raw["days"]:
+        db.add(ItineraryDay(itinerary_id=itin.id, **day_data))
+        days_out.append(DayPlan(**day_data))
+    db.commit()
+    db.refresh(itin)
+    result = ItineraryWithDays.model_validate(itin)
+    result.days = days_out
+    return result
+
+
+def recommend_destination(db: Session, payload: ItineraryGenerateRequest) -> dict:
+    """Use preference matching only when the traveller hasn't named a place."""
     if db.query(Destination).count() == 0:
         raise HTTPException(
             status_code=503,
@@ -46,8 +109,6 @@ def generate_itinerary(
         query_parts.append(f"{payload.preferred_climate} climate")
     if payload.interests:
         query_parts.append(f"interests: {', '.join(payload.interests)}")
-    if payload.destination_hint:
-        query_parts.append(payload.destination_hint)
 
     search_query = " ".join(query_parts)
 
@@ -85,74 +146,7 @@ def generate_itinerary(
             ),
         }]
 
-    best_match  = matches[0]
-    dest_obj    = db.query(Destination).filter(Destination.id == best_match["destination_id"]).first()
-    destination_id = dest_obj.id if dest_obj else None
-    dest_name   = best_match["name"]
-    dest_ctx    = best_match["document"]
-    release_read_transaction(db)
-
-    # 3. Generate itinerary with LLM
-    try:
-        raw = llm_service.generate_itinerary(
-            destination  = f"{best_match['name']}, {best_match['country']}",
-            duration     = payload.trip_duration,
-            budget       = payload.budget,
-            travel_style = payload.travel_style,
-            climate      = payload.preferred_climate,
-            dest_type    = payload.destination_type,
-            interests    = payload.interests,
-            dietary      = None,
-            accessibility = False,
-            dest_context = dest_ctx,
-        )
-        raw = llm_service.ItineraryLLM.model_validate(raw).model_dump()
-        if [day["day_number"] for day in raw["days"]] != list(range(1, payload.trip_duration + 1)):
-            raise ValueError("Invalid day sequence")
-    except RuntimeError:
-        raise HTTPException(status_code=503, detail="Trip generation is temporarily unavailable") from None
-    except (ValueError, TypeError):
-        raise HTTPException(status_code=502, detail="The trip provider returned an invalid itinerary") from None
-
-    # 4. Persist to DB
-    itin = Itinerary(
-        user_id          = user_id,
-        destination_id   = destination_id,
-        title            = raw.get("title", f"{payload.trip_duration} Days in {dest_name}"),
-        destination_name = raw.get("destination_name", dest_name),
-        duration_days    = payload.trip_duration,
-        budget           = payload.budget,
-        travel_style     = payload.travel_style,
-        summary          = raw.get("summary"),
-        full_itinerary   = json.dumps(raw),
-        status           = "saved",
-    )
-    db.add(itin)
-    db.flush()
-
-    # 5. Persist day-wise breakdown
-    days_out = []
-    for d in raw.get("days", []):
-        day = ItineraryDay(
-            itinerary_id   = itin.id,
-            day_number     = d["day_number"],
-            theme          = d.get("theme"),
-            morning        = d.get("morning"),
-            afternoon      = d.get("afternoon"),
-            evening        = d.get("evening"),
-            accommodation  = d.get("accommodation"),
-            estimated_cost = d.get("estimated_cost"),
-            tips           = d.get("tips"),
-        )
-        db.add(day)
-        days_out.append(DayPlan(**{k: d.get(k) for k in DayPlan.model_fields}))
-
-    db.commit()
-    db.refresh(itin)
-
-    result = ItineraryWithDays.model_validate(itin)
-    result.days = days_out
-    return result
+    return matches[0]
 
 
 # ── List ───────────────────────────────────────────────────────

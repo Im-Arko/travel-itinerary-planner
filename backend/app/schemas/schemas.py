@@ -145,7 +145,7 @@ class ItineraryGenerateRequest(BaseModel):
     trip_duration: int = Field(7, ge=1, le=30)
     travel_style: TravelStyle = "solo"
     interests: List[Interest] = Field(default_factory=list, max_length=20)
-    destination_hint: Optional[str] = Field(None, max_length=500)
+    destination_hint: Optional[str] = Field(None, max_length=500, description="A requested destination, which takes priority over recommendation filters. Leave blank for recommendations.")
 
 
 class ItineraryOut(BaseModel):

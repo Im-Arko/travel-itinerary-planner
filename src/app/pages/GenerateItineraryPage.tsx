@@ -113,7 +113,7 @@ export function GenerateItineraryPage() {
         trip_duration: duration,
         travel_style: travelStyle,
         interests,
-        destination_hint: destinationHint || undefined,
+        destination_hint: destinationHint.trim() || undefined,
       });
       setGeneratedItinerary(result);
     } catch (err) {
@@ -157,18 +157,19 @@ export function GenerateItineraryPage() {
             >
               <div className="travel-field mb-7">
                 <label htmlFor="trip-destination">
-                  Where are you dreaming of?
+                  Where do you want to go?
                 </label>
                 <input
                   id="trip-destination"
                   value={destinationHint}
                   onChange={(e) => setDestinationHint(e.target.value)}
-                  maxLength={500}
+                  maxLength={150}
                   className="travel-input"
-                  placeholder="A place, a feeling, or a little of both…"
+                  placeholder="Pondicherry, Kyoto, or another place…"
                 />
                 <p className="form-hint">
-                  Try “Kyoto” or “quiet mountain towns with great food”.
+                  Name a place and we'll plan your trip there. Leave this blank
+                  for a destination matched to your preferences.
                 </p>
               </div>
               <div className="border-y border-[#e0e2d5] py-5 mb-7">

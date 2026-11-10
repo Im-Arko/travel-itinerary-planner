@@ -58,6 +58,21 @@ def verify(base_url):
             assert len(saved.json()["days"]) == 2
             assert client.get("/api/itineraries/", headers=headers).json()
             print("PASS: itinerary generation, day plans, favorites and notes persist")
+            for requested, expected in (("pondicherry", "Pondicherry"), ("Puducherry", "Pondicherry"), ("Kyoto", "Kyoto"), ("Bergen", "Bergen")):
+                response = client.post("/api/itineraries/generate", headers=headers, json={
+                    "destination_hint": requested, "budget": "luxury", "preferred_climate": "cold",
+                    "destination_type": "mountain", "trip_duration": 2, "travel_style": "solo",
+                })
+                response.raise_for_status()
+                planned = response.json()
+                assert planned["destination_name"] == expected, f"Requested {requested}, got {planned['destination_name']}"
+                assert len(planned["days"]) == 2
+                saved = client.get(f"/api/itineraries/{planned['id']}", headers=headers)
+                saved.raise_for_status()
+                assert saved.json()["destination_name"] == expected
+                if expected == "Pondicherry":
+                    assert "Ladakh" not in response.text and "Pangong" not in response.text
+                print(f"PASS: requested {requested} persists as {expected} despite conflicting filters")
             assert client.post("/api/destinations/ingest", headers=headers, json={}).status_code == 403
             print("PASS: ordinary account cannot perform administrative ingestion")
         finally:
