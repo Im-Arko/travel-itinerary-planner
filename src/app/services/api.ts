@@ -1,3 +1,4 @@
+import type { RichPlan, Activity, TravelLeg, Place, TripRequest } from './planning';
 export interface User {
   id: number;
   email: string;
@@ -39,6 +40,12 @@ export interface DayPlan {
   accommodation: string | null;
   estimated_cost: number | null;
   tips: string | null;
+  date?: string | null;
+  activities?: Activity[];
+  travel_legs?: TravelLeg[];
+  user_note?: string;
+  place?: Place | null;
+  user_edited_slots?: string[];
 }
 
 export interface Itinerary {
@@ -58,21 +65,16 @@ export interface Itinerary {
   user_notes: string | null;
   generated_at: string;
   updated_at: string;
+  plan: RichPlan;
+  image_url: string | null;
 }
 
 export interface ItineraryWithDays extends Itinerary {
   days: DayPlan[];
 }
+export type ItinerarySummary = Omit<Itinerary, 'full_itinerary' | 'plan'>;
 
-export interface ItineraryGenerateRequest {
-  budget: string;
-  preferred_climate?: string;
-  destination_type?: string;
-  trip_duration: number;
-  travel_style?: string;
-  interests?: string[];
-  destination_hint?: string;
-}
+export type ItineraryGenerateRequest = TripRequest;
 
 export interface UserPreference {
   id: number;
@@ -85,6 +87,7 @@ export interface UserPreference {
   interests: string[];
   dietary_needs: string | null;
   accessibility: boolean;
+  planning_details: {destinationHint?: string; tripNotes?: string};
   created_at: string;
   updated_at: string;
 }
@@ -92,7 +95,7 @@ export interface UserPreference {
 export type UserPreferencePayload = Omit<UserPreference, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 
 const TOKEN_KEY = 'access_token';
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
 
 // Remove tokens persisted by older releases. Sessions now end when the tab closes.
 localStorage.removeItem(TOKEN_KEY);
@@ -106,7 +109,7 @@ export const clearAccessToken = () => {
   sessionStorage.removeItem(TOKEN_KEY);
 };
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getAccessToken();
   const headers = new Headers(options.headers);
 
@@ -115,21 +118,33 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const contentType = response.headers.get('Content-Type') || '';
-    const data = contentType.includes('application/json')
-      ? await response.json().catch(() => null)
-      : { detail: await response.text().catch(() => response.statusText) };
-    throw { response: { data, status: response.status } };
+  const controller = new AbortController();
+  const abort = () => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) abort();
+  options.signal?.addEventListener('abort', abort, {once:true});
+  const timeout = window.setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {...options, headers, signal:controller.signal});
+    if (!response.ok) {
+      if (response.status === 401 && token && !path.includes('/auth/login')) {
+        clearAccessToken();
+        window.dispatchEvent(new Event('travellant:unauthorized'));
+      }
+      const contentType = response.headers.get('Content-Type') || '';
+      const data = contentType.includes('application/json')
+        ? await response.json().catch(() => null)
+        : { detail: await response.text().catch(() => response.statusText) };
+      throw { response: { data, status: response.status } };
+    }
+    if (response.status === 204) return undefined as T;
+    return await response.json() as T;
+  } catch (error) {
+    if (controller.signal.aborted && !options.signal?.aborted) throw new Error('The request timed out. Your plan may still be running; check its progress before retrying.',{cause:error});
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', abort);
   }
-
-  if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
 }
 
 function queryString(params: Record<string, string | number | boolean | undefined>) {
@@ -172,6 +187,12 @@ export const authApi = {
 };
 
 export const destinationsApi = {
+  page(params:{budget?:string;climate?:string;dest_type?:string;skip?:number;limit?:number}={},signal?:AbortSignal) {
+    return request<{items:Destination[];total:number}>(`/api/destinations/page${queryString(params)}`,{signal});
+  },
+  searchPage(params:{q:string;budget?:string;climate?:string;dest_type?:string;skip?:number;limit?:number},signal?:AbortSignal) {
+    return request<{items:DestinationSearchResult[];total:number}>(`/api/destinations/search/page${queryString(params)}`,{signal});
+  },
   async list(params: {
     budget?: string;
     climate?: string;
@@ -209,6 +230,9 @@ export const destinationsApi = {
 };
 
 export const itinerariesApi = {
+  async page(params: {status?:string; favorites?:boolean; skip?:number; limit?:number} = {},signal?:AbortSignal) {
+    return request<{items:ItinerarySummary[]; total:number; total_all:number; total_favorites:number}>(`/api/itineraries/page${queryString(params)}`,{signal});
+  },
   async generate(payload: ItineraryGenerateRequest) {
     return request<ItineraryWithDays>('/api/itineraries/generate', {
       method: 'POST',
@@ -234,11 +258,20 @@ export const itinerariesApi = {
   async remove(id: number) {
     await request<void>(`/api/itineraries/${id}`, { method: 'DELETE' });
   },
+  editDay(id:number, day:number, payload:{morning?:string; afternoon?:string; evening?:string; user_note?:string}) {
+    return request<ItineraryWithDays>(`/api/itineraries/${id}/days/${day}`, {method:'PATCH', body:JSON.stringify(payload)});
+  },
+  reorder(id:number, dayNumbers:number[]) {
+    return request<ItineraryWithDays>(`/api/itineraries/${id}/day-order`, {method:'PUT', body:JSON.stringify({day_numbers:dayNumbers})});
+  },
+  regenerateDay(id:number,day:number,key:string) {
+    return request<import('./planning').PlanningJob>(`/api/itineraries/${id}/days/${day}/regenerate/${key}`,{method:'POST'});
+  },
 };
 
 export const preferencesApi = {
-  async get() {
-    return request<UserPreference>('/api/preferences/');
+  async get(signal?:AbortSignal) {
+    return request<UserPreference>('/api/preferences/', {signal});
   },
 
   async save(payload: UserPreferencePayload) {

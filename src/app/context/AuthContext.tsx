@@ -45,6 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    const expire = () => setUser(null);
+    window.addEventListener('travellant:unauthorized', expire);
+    return () => window.removeEventListener('travellant:unauthorized', expire);
+  }, []);
+
   const login = async (email: string, password: string) => {
     const token = await authApi.login(email, password);
     setAccessToken(token.access_token);
@@ -63,6 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    if (user) {
+      sessionStorage.removeItem(`trip_preferences:${user.id}`);
+      sessionStorage.removeItem(`trip_draft:${user.id}`);
+      sessionStorage.removeItem(`planning_job:${user.id}`);
+    }
+    sessionStorage.removeItem('trip_preferences');
     clearAccessToken();
     localStorage.removeItem(USER_KEY);
     setUser(null);

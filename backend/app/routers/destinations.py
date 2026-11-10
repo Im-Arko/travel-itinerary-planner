@@ -13,6 +13,26 @@ from ..security import search_limit
 router = APIRouter(prefix="/api/destinations", tags=["Destinations"])
 
 
+@router.get("/page")
+def page(budget: Optional[str] = None, climate: Optional[str] = None, dest_type: Optional[str] = None,
+         skip: int = Query(0, ge=0), limit: int = Query(24, ge=1, le=100), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    query = db.query(Destination)
+    for value, column in ((budget, Destination.budget_level), (climate, Destination.climate_type), (dest_type, Destination.destination_type)):
+        if value:
+            query = query.filter(column == value)
+    return {"items": [DestinationOut.model_validate(row) for row in query.order_by(Destination.id).offset(skip).limit(limit).all()], "total": query.count(), "skip": skip, "limit": limit}
+
+
+@router.get("/search/page", dependencies=[Depends(search_limit)])
+def search_page(q: str = Query(min_length=1, max_length=500), budget: Optional[str] = None, climate: Optional[str] = None, dest_type: Optional[str] = None,
+                skip: int = Query(0, ge=0), limit: int = Query(24, ge=1, le=50), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    results = vector_store.semantic_search(db, q, n_results=10000, budget_filter=budget, climate_filter=climate, dest_type_filter=dest_type)
+    results = [row for row in results if row["score"] >= 0.2]
+    chosen = results[skip:skip+limit]
+    destinations = {row.id: row for row in db.query(Destination).filter(Destination.id.in_([row["destination_id"] for row in chosen])).all()}
+    return {"items": [DestinationSearchResult(destination=DestinationOut.model_validate(destinations[row["destination_id"]]), similarity_score=row["score"], match_reason=f"Semantic relevance score: {row['score']:.2f}; this is not a probability.") for row in chosen if row["destination_id"] in destinations], "total": len(results), "skip": skip, "limit": limit}
+
+
 @router.get("/", response_model=List[DestinationOut],
             summary="List all destinations in the knowledge base")
 def list_destinations(
@@ -31,7 +51,7 @@ def list_destinations(
         q = q.filter(Destination.climate_type == climate)
     if dest_type:
         q = q.filter(Destination.destination_type == dest_type)
-    return q.offset(skip).limit(limit).all()
+    return q.order_by(Destination.id).offset(skip).limit(limit).all()
 
 
 @router.get("/search", response_model=List[DestinationSearchResult], dependencies=[Depends(search_limit)],
@@ -54,13 +74,14 @@ def search_destinations(
     )
 
     output = []
+    destinations = {row.id:row for row in db.query(Destination).filter(Destination.id.in_([item['destination_id'] for item in results])).all()}
     for r in results:
-        dest = db.query(Destination).filter(Destination.id == r["destination_id"]).first()
+        dest = destinations.get(r["destination_id"])
         if dest:
             output.append(DestinationSearchResult(
                 destination      = DestinationOut.model_validate(dest),
                 similarity_score = r["score"],
-                match_reason     = f"Matches your query with {r['score']*100:.0f}% semantic similarity",
+                match_reason     = f"Semantic relevance score: {r['score']:.2f}; this is not a probability.",
             ))
     return output
 

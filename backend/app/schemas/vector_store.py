@@ -25,6 +25,7 @@ def _get_embedder():
             from sentence_transformers import SentenceTransformer
             _embedder = SentenceTransformer(
                 settings.embedding_model, trust_remote_code=False,
+                revision=settings.embedding_revision,
                 model_kwargs={"use_safetensors": True},
             )
     return _embedder
@@ -78,6 +79,7 @@ def ingest_destinations(db: Session, destination_ids: Optional[list[int]] = None
                 row = DestinationEmbedding(destination_id=destination_id)
                 db.add(row)
             row.model_name = settings.embedding_model
+            row.model_revision = settings.embedding_revision
             row.document = document
             row.embedding = vector
         db.commit()
@@ -94,7 +96,8 @@ def semantic_search(
 ) -> list[dict]:
     query = db.query(Destination, DestinationEmbedding).join(
         DestinationEmbedding, DestinationEmbedding.destination_id == Destination.id
-    ).filter(DestinationEmbedding.model_name == settings.embedding_model)
+    ).filter(DestinationEmbedding.model_name == settings.embedding_model,
+             DestinationEmbedding.model_revision == settings.embedding_revision)
     for column, value in ((Destination.budget_level, budget_filter),
                           (Destination.climate_type, climate_filter),
                           (Destination.destination_type, dest_type_filter)):
@@ -130,5 +133,6 @@ def semantic_search(
 
 def collection_count(db: Session) -> int:
     return db.query(DestinationEmbedding).filter(
-        DestinationEmbedding.model_name == settings.embedding_model
+        DestinationEmbedding.model_name == settings.embedding_model,
+        DestinationEmbedding.model_revision == settings.embedding_revision
     ).count()

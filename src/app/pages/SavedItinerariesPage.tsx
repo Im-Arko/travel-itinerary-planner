@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Itinerary, itinerariesApi } from "../services/api";
-import { errorMessage, titleCase } from "../utils/formatters";
+import { ItinerarySummary, itinerariesApi } from "../services/api";
+import { errorMessage, titleCase, fallbackTravelImage } from "../utils/formatters";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { TravelHero, travelPhotos } from "../components/TravelHero";
-import { useDestinationPhoto } from "../components/useDestinationPhoto";
 import LoadingState from "../components/LoadingState";
 import {
   Heart,
@@ -19,11 +18,15 @@ export function SavedItinerariesPage() {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [itineraries, setItineraries] = useState<ItinerarySummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Itinerary | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ItinerarySummary | null>(null);
+  const [page,setPage]=useState(0);
+  const [totals,setTotals]=useState({total:0,all:0,favorites:0});
+  const [revision,setRevision]=useState(0);
+  const [busyId,setBusyId]=useState<number|null>(null);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/login");
@@ -31,18 +34,22 @@ export function SavedItinerariesPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+    const controller=new AbortController();
     setIsLoading(true);
     setError("");
     itinerariesApi
-      .list({ limit: 50 })
-      .then(setItineraries)
+      .page({ limit:24,skip:page*24,favorites:favoritesOnly?true:undefined },controller.signal)
+      .then(result=>{if(controller.signal.aborted)return;setItineraries(result.items);setTotals({total:result.total,all:result.total_all,favorites:result.total_favorites});if(!result.items.length&&page>0)setPage(Math.max(0,Math.ceil(result.total/24)-1));})
       .catch((err) =>
-        setError(errorMessage(err, "Unable to load itineraries.")),
+        !controller.signal.aborted&&setError(errorMessage(err, "Unable to load itineraries.")),
       )
-      .finally(() => setIsLoading(false));
-  }, [isAuthenticated]);
+      .finally(() => {if(!controller.signal.aborted)setIsLoading(false);});
+    return()=>controller.abort();
+  }, [isAuthenticated,page,favoritesOnly,revision]);
 
-  const toggleFavorite = async (itinerary: Itinerary) => {
+  const toggleFavorite = async (itinerary: ItinerarySummary) => {
+    if(busyId!==null||deletingId!==null)return;
+    setBusyId(itinerary.id);
     const previous = itineraries;
     setItineraries((prev) =>
       prev.map((item) =>
@@ -55,19 +62,24 @@ export function SavedItinerariesPage() {
       await itinerariesApi.update(itinerary.id, {
         is_favorite: !itinerary.is_favorite,
       });
+      setRevision(value=>value+1);
     } catch (err) {
       setItineraries(previous);
       setError(errorMessage(err, "Unable to update favorite status."));
+    } finally {
+      setBusyId(null);
     }
   };
 
-  const handleDelete = async (itinerary: Itinerary) => {
+  const handleDelete = async (itinerary: ItinerarySummary) => {
+    if(busyId!==null||deletingId!==null)return;
     setDeleteTarget(null);
     setDeletingId(itinerary.id);
     const previous = itineraries;
     setItineraries((prev) => prev.filter((item) => item.id !== itinerary.id));
     try {
       await itinerariesApi.remove(itinerary.id);
+      setRevision(value=>value+1);
     } catch (err) {
       setItineraries(previous);
       setError(errorMessage(err, "Unable to delete itinerary."));
@@ -77,10 +89,8 @@ export function SavedItinerariesPage() {
   };
 
   if (loading) return null;
-  const favorites = itineraries.filter((i) => i.is_favorite).length;
-  const visibleTrips = favoritesOnly
-    ? itineraries.filter((i) => i.is_favorite)
-    : itineraries;
+  const favorites = totals.favorites;
+  const visibleTrips = itineraries;
   return (
     <div>
       <TravelHero
@@ -111,14 +121,14 @@ export function SavedItinerariesPage() {
             <button
               className="travel-choice"
               aria-pressed={!favoritesOnly}
-              onClick={() => setFavoritesOnly(false)}
+              onClick={() => {setFavoritesOnly(false);setPage(0);}}
             >
-              All trips <span className="opacity-65">{itineraries.length}</span>
+              All trips <span className="opacity-65">{totals.all}</span>
             </button>
             <button
               className="travel-choice"
               aria-pressed={favoritesOnly}
-              onClick={() => setFavoritesOnly(true)}
+              onClick={() => {setFavoritesOnly(true);setPage(0);}}
             >
               <Heart size={14} />
               Favourites <span className="opacity-65">{favorites}</span>
@@ -141,7 +151,7 @@ export function SavedItinerariesPage() {
                 itinerary={itinerary}
                 toggleFavorite={() => toggleFavorite(itinerary)}
                 onDelete={() => setDeleteTarget(itinerary)}
-                deleting={deletingId === itinerary.id}
+                deleting={deletingId!==null||busyId!==null}
               />
             ))}
           </div>
@@ -194,6 +204,7 @@ export function SavedItinerariesPage() {
             isDeleting={deletingId === deleteTarget.id}
           />
         )}
+        {totals.total>24&&<nav aria-label="Saved trip pages" className="flex justify-between items-center gap-4 mt-8"><button className="travel-button travel-button-outline" disabled={page===0||isLoading} onClick={()=>setPage(value=>value-1)}>Previous</button><span>Page {page+1} of {Math.ceil(totals.total/24)}</span><button className="travel-button travel-button-outline" disabled={(page+1)*24>=totals.total||isLoading} onClick={()=>setPage(value=>value+1)}>Next</button></nav>}
       </div>
     </div>
   );
@@ -204,12 +215,12 @@ function SavedTripCard({
   onDelete,
   deleting,
 }: {
-  itinerary: Itinerary;
+  itinerary: ItinerarySummary;
   toggleFavorite: () => void;
   onDelete: () => void;
   deleting: boolean;
 }) {
-  const photo = useDestinationPhoto(itinerary.destination_id);
+  const photo = itinerary.image_url || '/icons/plan-illustration.svg';
   return (
     <article className="photo-card">
       <div className="relative overflow-hidden">
@@ -218,7 +229,7 @@ function SavedTripCard({
           tabIndex={-1}
           aria-hidden="true"
         >
-          <img src={photo} alt="" loading="lazy" className="photo-card-image" />
+          <img onError={fallbackTravelImage} src={photo} alt="" loading="lazy" className="photo-card-image" />
         </Link>
         <span className="photo-card-badge">
           {itinerary.duration_days} days · {titleCase(itinerary.budget)}
@@ -226,6 +237,7 @@ function SavedTripCard({
         <div className="photo-card-actions">
           <button
             onClick={toggleFavorite}
+            disabled={deleting}
             className="icon-button"
             aria-label={`${itinerary.is_favorite ? "Unfavourite" : "Favourite"} ${itinerary.title}`}
             aria-pressed={itinerary.is_favorite}

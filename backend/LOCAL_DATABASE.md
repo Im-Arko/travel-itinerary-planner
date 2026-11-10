@@ -33,3 +33,6 @@ From `backend`, using `.security-venv/Scripts/python.exe`:
 3. `smoke_local_backend.py --base-url http://127.0.0.1:8001` checks the running API with a disposable account and real embedding inference. Generation follows the existing mock-provider setting.
 
 Run the two live checks sequentially. The final verification snapshot is `database-verification.json`. The fully installed runtime passes dependency consistency and vulnerability audits (`security-installed-audit.json`).
+# Planner v2 update — 11 November 2026
+
+The additive planner migration has been applied after a private database backup. Local records remain at 13 users, 12 itineraries and 72 days; all 65 catalog embeddings were rebuilt with the pinned model revision. Runtime privileges and verified TLS remain restricted. `USE_MOCK_LLM=false` and the existing Google provider configuration are enabled in the ignored local environment. Reproduce the schema upgrade with `migrate_planner.py` using the database owner's migration credentials.

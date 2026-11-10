@@ -5,17 +5,18 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from sqlalchemy import literal, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from .database.models import Base
 from .database.session import engine
 from .config import get_settings
 from .security import RequestProtection
-from .routers import auth, preferences, destinations, itineraries
+from .routers import auth, preferences, destinations, itineraries, planning
+from .services import ai_planner
 
 settings = get_settings()
 app = FastAPI(
-    title="Travel Itinerary API", version="1.1.0",
+    title="Travel Itinerary API", version="2.0.0",
     docs_url="/docs" if settings.app_env != "production" else None,
     redoc_url=None, openapi_url="/openapi.json" if settings.app_env != "production" else None,
 )
@@ -24,7 +25,7 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts_l
 app.add_middleware(
     CORSMiddleware, allow_origins=settings.cors_origins_list, allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
 )
 
 
@@ -47,6 +48,7 @@ app.include_router(auth.router)
 app.include_router(preferences.router)
 app.include_router(destinations.router)
 app.include_router(itineraries.router)
+app.include_router(planning.router)
 
 
 @app.get("/health", tags=["System"])
@@ -60,10 +62,13 @@ def ready():
         with engine.connect() as connection:
             # Check the required schema and read access without returning records.
             for table in Base.metadata.sorted_tables:
-                connection.execute(select(literal(1)).select_from(table).limit(0))
+                connection.execute(select(table).limit(0))
     except SQLAlchemyError:
         return JSONResponse(status_code=503, content={"status": "degraded", "database": "unavailable"})
-    return {"status": "ok", "database": "available"}
+    ai_configured = ai_planner.available()
+    if settings.app_env == "production" and not ai_configured:
+        return JSONResponse(status_code=503, content={"status": "degraded", "database": "available", "ai": "not_configured"})
+    return {"status": "ok", "database": "available", "ai": "configured" if ai_configured else "not_configured", "guided": "available"}
 
 
 @app.get("/", tags=["System"])

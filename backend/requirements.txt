@@ -3,4 +3,4 @@
 # Optional ML services are loaded only when destination search/generation is used.
 # LangChain was unused and pulled in vulnerable transitive dependencies.
 sentence-transformers==5.7.0
-openai==2.54.0
+torch==2.14.1

@@ -8,6 +8,7 @@ import {
 } from "../services/api";
 import {
   destinationImage,
+  fallbackTravelImage,
   errorMessage,
   parseTags,
   titleCase,
@@ -28,6 +29,8 @@ export function DestinationsPage() {
   >({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/login");
@@ -45,17 +48,19 @@ export function DestinationsPage() {
           budget: budgetFilter === "all" ? undefined : budgetFilter,
           climate: climateFilter === "all" ? undefined : climateFilter,
           dest_type: typeFilter === "all" ? undefined : typeFilter,
-          limit: 50,
+          limit: 24,
+          skip: page*24,
         };
 
         if (searchQuery.trim()) {
-          const results = await destinationsApi.search({
+          const response = await destinationsApi.searchPage({
             q: searchQuery.trim(),
             ...params,
-            limit: 20,
-          });
+          },controller.signal);
+          const results=response.items;
           if (!controller.signal.aborted) {
             setDestinations(results.map((r) => r.destination));
+            setTotal(response.total);
             // Store similarity scores for badges
             const scores: Record<number, { score: number; reason: string }> =
               {};
@@ -68,9 +73,10 @@ export function DestinationsPage() {
             setSimilarityScores(scores);
           }
         } else {
-          const data = await destinationsApi.list(params);
+          const data = await destinationsApi.page(params,controller.signal);
           if (!controller.signal.aborted) {
-            setDestinations(data);
+            setDestinations(data.items);
+            setTotal(data.total);
             setSimilarityScores({});
           }
         }
@@ -89,7 +95,9 @@ export function DestinationsPage() {
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [budgetFilter, climateFilter, isAuthenticated, searchQuery, typeFilter]);
+  }, [budgetFilter, climateFilter, isAuthenticated, searchQuery, typeFilter,page]);
+
+  useEffect(()=>setPage(0),[budgetFilter,climateFilter,searchQuery,typeFilter]);
 
   if (loading) return null;
 
@@ -204,9 +212,10 @@ export function DestinationsPage() {
           <p role="status" className="shrink-0 pt-2">
             {isLoading
               ? "Finding places…"
-              : `${destinations.length} places to explore`}
+              : `${total} matching catalog places`}
           </p>
         </div>
+        <p className="form-hint mb-6">These are curated destination profiles. Plan a Trip can resolve cities worldwide and will confirm the intended country and region.</p>
         {error && (
           <div role="alert" className="travel-error mb-6">
             <AlertCircle size={18} className="shrink-0 mt-1" />
@@ -227,7 +236,7 @@ export function DestinationsPage() {
                 className="photo-card group"
               >
                 <div className="relative overflow-hidden">
-                  <img
+                  <img onError={fallbackTravelImage}
                     src={destinationImage(destination)}
                     alt={destination.name}
                     loading="lazy"
@@ -302,6 +311,7 @@ export function DestinationsPage() {
             </div>
           )
         )}
+        {total>24&&<nav aria-label="Destination pages" className="flex justify-between items-center gap-4 mt-8"><button className="travel-button travel-button-outline" disabled={page===0||isLoading} onClick={()=>setPage(value=>value-1)}>Previous</button><span>Page {page+1} of {Math.ceil(total/24)}</span><button className="travel-button travel-button-outline" disabled={(page+1)*24>=total||isLoading} onClick={()=>setPage(value=>value+1)}>Next</button></nav>}
       </div>
     </div>
   );

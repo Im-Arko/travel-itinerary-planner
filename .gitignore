@@ -52,3 +52,4 @@ backend/.local-backups/
 backend/.local-database-tls/
 token.txt
 npm-audit.json
+supabase/.temp/

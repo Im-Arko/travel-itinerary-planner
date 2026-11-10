@@ -29,8 +29,14 @@ class Settings(BaseSettings):
     # Operator-controlled allowlist; never accepted from registration or JWT roles.
     admin_user_ids: str = ""
     openai_api_key: str = ""
-    use_mock_llm: bool = True
+    openai_model: str = "gpt-4o-mini"
+    google_api_key: str = ""
+    google_model: str = "gemini-2.5-flash"
+    llm_provider: Literal["google", "openai"] = "google"
+    use_mock_llm: bool = False
     embedding_model: str = "all-MiniLM-L6-v2"
+    embedding_revision: str = Field("1110a243fdf4706b3f48f1d95db1a4f5529b4d41", pattern=r"^[a-f0-9]{40}$")
+    trusted_proxy_networks: str = "127.0.0.1/32,::1/128"
     app_env: Literal["development", "test", "production"] = "development"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     trusted_hosts: str = "localhost,127.0.0.1,testserver"

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { fallbackTravelImage } from '../utils/formatters';
 
 export const travelPhotos = {
   lake: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=2000&q=85",
@@ -37,6 +38,7 @@ export function TravelHero({
     <section className={`travel-hero${back ? " travel-hero-detail" : ""}`}>
       <img
         src={image}
+        onError={fallbackTravelImage}
         alt=""
         className="travel-hero-image"
       />

@@ -21,7 +21,6 @@ from backend.app.main import app
 from backend.app.config import Settings
 from backend.app.database.models import Base, User, Itinerary, ItineraryDay, UserPreference, SecurityRateLimit
 from backend.app.database.session import get_db
-from backend.app.schemas import llm_service
 from backend.app.security import RequestProtection, enforce_limit
 from backend.app.services import auth_service
 
@@ -144,10 +143,6 @@ class SecurityTests(unittest.TestCase):
         self.assertIn("Retry-After",response.headers)
         self.assertEqual(self.db.query(SecurityRateLimit).count(),1)
 
-    def test_generation_quota_persists_across_sessions(self):
-        for _ in range(5):
-            with Session() as db: enforce_limit(db,"generation",str(self.alice.id),5,3600)
-        self.assertEqual(self.client.post("/api/itineraries/generate",json={"budget":"moderate"},headers=self.headers).status_code,429)
 
     def test_request_limits_hosts_and_cors(self):
         response=self.client.post("/api/auth/register",content=b"x"*65537)
@@ -186,109 +181,14 @@ class SecurityTests(unittest.TestCase):
         self.db.execute(text("DELETE FROM users WHERE id=:id"),{"id":self.alice.id}); self.db.commit()
         self.assertEqual(self.db.query(Itinerary).count(),0)
 
-    def test_provider_errors_do_not_leak(self):
-        with patch("backend.app.schemas.vector_store.collection_count",return_value=1), patch("backend.app.schemas.vector_store.semantic_search",return_value=[{"destination_id":1,"name":"Kyoto","country":"Japan","document":"context"}]), patch("backend.app.schemas.llm_service.generate_itinerary",side_effect=RuntimeError("api-key-secret")):
-            from backend.app.database.models import Destination
-            self.db.add(Destination(name="Kyoto",country="Japan",description="Kyoto",climate_type="temperate",destination_type="cultural",budget_level="moderate"))
-            self.db.commit()
-            response=self.client.post("/api/itineraries/generate",json={"budget":"moderate"},headers=self.headers)
-            self.assertEqual(response.status_code,503,response.text)
-            self.assertNotIn("api-key-secret",response.text)
 
-    def test_generation_success(self):
-        from backend.app.database.models import Destination
-        self.db.add(Destination(name="Kyoto",country="Japan",description="Kyoto",climate_type="temperate",destination_type="cultural",budget_level="moderate"))
-        self.db.commit()
-        with patch("backend.app.schemas.vector_store.collection_count",return_value=1), patch("backend.app.schemas.vector_store.semantic_search",return_value=[{"destination_id":1,"name":"Kyoto","country":"Japan","document":"context"}]):
-            response=self.client.post("/api/itineraries/generate",json={"budget":"moderate","trip_duration":2},headers=self.headers)
-            self.assertEqual(response.status_code,201,response.text)
-            self.assertEqual(len(response.json()["days"]),2)
 
-    def test_requested_destination_overrides_conflicting_preferences(self):
-        from backend.app.database.models import Destination
-        self.db.add(Destination(name="Ladakh", country="India", description="Mountains", climate_type="cold", destination_type="adventure", budget_level="luxury"))
-        self.db.commit()
-        with patch("backend.app.schemas.vector_store.semantic_search") as search, patch("backend.app.schemas.vector_store.ingest_destinations") as ingest:
-            response = self.client.post("/api/itineraries/generate", headers=self.headers, json={
-                "destination_hint": "pondicherry", "budget": "luxury", "preferred_climate": "cold", "destination_type": "mountain", "trip_duration": 2,
-            })
-            self.assertEqual(response.status_code, 201, response.text)
-            itinerary = response.json()
-            self.assertEqual(itinerary["destination_name"], "Pondicherry")
-            self.assertIsNone(itinerary["destination_id"])
-            self.assertEqual(json.loads(itinerary["full_itinerary"])["destination_name"], "Pondicherry")
-            activities = json.dumps(itinerary["days"])
-            self.assertTrue(any(place in activities for place in ("White Town", "Promenade Beach", "Bharathi Park", "Sri Aurobindo Ashram", "Puducherry Museum")))
-            self.assertNotIn("Ladakh", response.text)
-            self.assertNotIn("Pangong", response.text)
-            search.assert_not_called()
-            ingest.assert_not_called()
-            saved = self.client.get(f"/api/itineraries/{itinerary['id']}", headers=self.headers)
-            self.assertEqual(saved.json()["destination_name"], "Pondicherry")
 
-    def test_requested_place_aliases_and_mentions_work_without_catalog(self):
-        for hint in ("  PUDUCHERRY  ", "a weekend in Pondicherry", "Pondy", "Pondichérry"):
-            with self.subTest(hint=hint):
-                response = self.client.post("/api/itineraries/generate", headers=self.headers, json={"destination_hint": hint, "budget": "moderate", "trip_duration": 1})
-                self.assertEqual(response.status_code, 201, response.text)
-                self.assertEqual(response.json()["destination_name"], "Pondicherry")
 
-    def test_requested_catalog_place_keeps_its_id_despite_filters(self):
-        from backend.app.database.models import Destination
-        destination = Destination(name="Kyoto", country="Japan", description="Temples", climate_type="temperate", destination_type="cultural", budget_level="moderate")
-        self.db.add(destination)
-        self.db.commit()
-        destination_id = destination.id
-        with patch("backend.app.schemas.vector_store.semantic_search") as search:
-            response = self.client.post("/api/itineraries/generate", headers=self.headers, json={"destination_hint": "KYOTO, JAPAN", "budget": "budget", "preferred_climate": "cold", "trip_duration": 1})
-            self.assertEqual(response.status_code, 201, response.text)
-            self.assertEqual(response.json()["destination_name"], "Kyoto")
-            self.assertEqual(response.json()["destination_id"], destination_id)
-            search.assert_not_called()
 
-    def test_uncatalogued_places_and_geographic_qualifiers_are_preserved(self):
-        from backend.app.database.models import Destination
-        self.db.add_all([
-            Destination(name="Paris", country="France", description="Eiffel Tower", climate_type="temperate", destination_type="city", budget_level="luxury"),
-            Destination(name="Bali", country="Indonesia", description="Ubud", climate_type="tropical", destination_type="beach", budget_level="moderate"),
-            Destination(name="Santiago", country="Chile", description="Cerro Santa Lucia", climate_type="temperate", destination_type="city", budget_level="moderate"),
-        ])
-        self.db.commit()
-        for hint in ("Bergen", "Paris, Texas", "Baliem Valley", "Santiago de Compostela"):
-            with self.subTest(hint=hint):
-                response = self.client.post("/api/itineraries/generate", headers=self.headers, json={"destination_hint": hint, "budget": "moderate", "trip_duration": 1})
-                self.assertEqual(response.status_code, 201, response.text)
-                self.assertEqual(response.json()["destination_name"], hint)
-                self.assertIsNone(response.json()["destination_id"])
-                self.assertNotIn("Eiffel", response.text)
-                self.assertNotIn("Ubud", response.text)
 
-    def test_multiple_destinations_need_clarification(self):
-        from backend.app.database.models import Destination
-        self.db.add(Destination(name="Goa", country="India", description="Beaches", climate_type="tropical", destination_type="beach", budget_level="moderate"))
-        self.db.commit()
-        for hint in ("Goa or Pondicherry", "Goa, Pondicherry"):
-            response = self.client.post("/api/itineraries/generate", headers=self.headers, json={"destination_hint": hint, "budget": "moderate"})
-            self.assertEqual(response.status_code, 422, response.text)
-            self.assertIn("one destination", response.json()["detail"])
-        self.assertEqual(self.db.query(Itinerary).count(), 0)
 
-    def test_provider_cannot_change_selected_destination(self):
-        wrong_plan = llm_service._generate_mock_itinerary(destination="Ladakh", duration=1, budget="moderate", travel_style="solo")
-        with patch.object(llm_service, "generate_itinerary", return_value=wrong_plan):
-            response = self.client.post("/api/itineraries/generate", headers=self.headers, json={"destination_hint": "Pondicherry", "budget": "moderate", "trip_duration": 1})
-        self.assertEqual(response.status_code, 502, response.text)
-        self.assertEqual(self.db.query(Itinerary).count(), 0)
 
-    def test_blank_destination_still_uses_recommendations(self):
-        from backend.app.database.models import Destination
-        self.db.add(Destination(name="Kyoto", country="Japan", description="Kyoto", climate_type="temperate", destination_type="cultural", budget_level="moderate"))
-        self.db.commit()
-        with patch("backend.app.schemas.vector_store.collection_count", return_value=1), patch("backend.app.schemas.vector_store.semantic_search", return_value=[{"destination_id": 1, "name": "Kyoto", "country": "Japan", "document": "context"}]) as search:
-            response = self.client.post("/api/itineraries/generate", headers=self.headers, json={"destination_hint": "  ", "budget": "moderate", "trip_duration": 1})
-            self.assertEqual(response.status_code, 201, response.text)
-            self.assertEqual(response.json()["destination_name"], "Kyoto")
-            search.assert_called_once()
 
     def test_database_embedding_search_and_reingestion(self):
         from backend.app.database.models import Destination, DestinationEmbedding

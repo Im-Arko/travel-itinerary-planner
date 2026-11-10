@@ -1,4 +1,4 @@
-from datetime import datetime
+from ..time_utils import utcnow
 from sqlalchemy import (
     Column, Integer, String, Text, DateTime, Boolean,
     Enum, ForeignKey, DECIMAL, SmallInteger, JSON, CheckConstraint, UniqueConstraint, Index, column, or_
@@ -18,8 +18,8 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     full_name     = Column(String(100))
     avatar_url    = Column(String(500))
-    created_at    = Column(DateTime, default=datetime.utcnow)
-    updated_at    = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at    = Column(DateTime, default=utcnow)
+    updated_at    = Column(DateTime, default=utcnow, onupdate=utcnow)
     is_active     = Column(Boolean, default=True)
 
     preferences   = relationship("UserPreference", back_populates="user", cascade="all, delete-orphan")
@@ -44,8 +44,9 @@ class UserPreference(Base):
     interests         = Column(Text)          # JSON array
     dietary_needs     = Column(String(255))
     accessibility     = Column(Boolean, default=False)
-    created_at        = Column(DateTime, default=datetime.utcnow)
-    updated_at        = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at        = Column(DateTime, default=utcnow)
+    updated_at        = Column(DateTime, default=utcnow, onupdate=utcnow)
+    planning_details  = Column(JSON, nullable=True)
 
     user = relationship("User", back_populates="preferences")
 
@@ -68,8 +69,8 @@ class Destination(Base):
     latitude         = Column(DECIMAL(9, 6))
     longitude        = Column(DECIMAL(9, 6))
     chroma_doc_id    = Column(String(100))
-    created_at       = Column(DateTime, default=datetime.utcnow)
-    updated_at       = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at       = Column(DateTime, default=utcnow)
+    updated_at       = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     itineraries = relationship("Itinerary", back_populates="destination")
 
@@ -81,6 +82,7 @@ class Itinerary(Base):
         CheckConstraint("rating IS NULL OR rating BETWEEN 1 AND 5", name="ck_itin_rating"),
         CheckConstraint(JsonValid(column("full_itinerary")), name="ck_itin_json"),
         Index("idx_itin_user_generated", "user_id", "generated_at"),
+        Index("idx_itin_destination", "destination_id"),
     )
 
     id               = Column(Integer, primary_key=True, autoincrement=True)
@@ -97,13 +99,26 @@ class Itinerary(Base):
     is_favorite      = Column(Boolean, default=False)
     rating           = Column(SmallInteger)
     user_notes       = Column(Text)
-    generated_at     = Column(DateTime, default=datetime.utcnow)
-    updated_at       = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    generated_at     = Column(DateTime, default=utcnow)
+    updated_at       = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     user        = relationship("User", back_populates="itineraries")
     destination = relationship("Destination", back_populates="itineraries")
     days        = relationship("ItineraryDay", back_populates="itinerary", cascade="all, delete-orphan",
                                order_by="ItineraryDay.day_number")
+
+    @property
+    def plan(self):
+        import json
+        try:
+            value = json.loads(self.full_itinerary)
+            return value if isinstance(value, dict) else {}
+        except (ValueError, TypeError):
+            return {}
+
+    @property
+    def image_url(self):
+        return self.plan.get("image_url")
 
 
 class ItineraryDay(Base):
@@ -132,10 +147,10 @@ class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
 
     id          = Column(Integer, primary_key=True, autoincrement=True)
-    user_id     = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id     = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     token_hash  = Column(String(255), unique=True, nullable=False)
     expires_at  = Column(DateTime, nullable=False)
-    created_at  = Column(DateTime, default=datetime.utcnow)
+    created_at  = Column(DateTime, default=utcnow)
     revoked     = Column(Boolean, default=False)
 
 
@@ -150,5 +165,22 @@ class DestinationEmbedding(Base):
     __tablename__ = "destination_embeddings"
     destination_id = Column(Integer, ForeignKey("destinations.id", ondelete="CASCADE"), primary_key=True)
     model_name = Column(String(255), nullable=False, index=True)
+    model_revision = Column(String(64), nullable=True)
     document = Column(Text, nullable=False)
     embedding = Column(JSON, nullable=False)
+
+
+class PlanningRequest(Base):
+    __tablename__ = "planning_requests"
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    request_key = Column(String(64), primary_key=True)
+    payload_hash = Column(String(64), nullable=False)
+    request_payload = Column(JSON, nullable=False)
+    status = Column(String(20), nullable=False, default="pending")
+    phase = Column(String(30), nullable=False, default="queued")
+    itinerary_id = Column(Integer, ForeignKey("itineraries.id", ondelete="SET NULL"), nullable=True, index=True)
+    error = Column(String(500), nullable=True)
+    error_code = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    completed_at = Column(DateTime, nullable=True, index=True)

@@ -1,8 +1,8 @@
 import { InterestIcon } from "../components/InterestIcon";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { usePreferences, UserPreferences } from "../context/PreferencesContext";
+import { usePreferences, UserPreferences, mapPreferences } from "../context/PreferencesContext";
 import { preferencesApi } from "../services/api";
 import {
   errorMessage,
@@ -84,7 +84,6 @@ export function PreferencesPage() {
   const { isAuthenticated, loading } = useAuth();
   const { preferences, savePreferences } = usePreferences();
   const navigate = useNavigate();
-  const initialDestinationHint = useRef(preferences?.destinationHint || "");
 
   const [formData, setFormData] = useState<UserPreferences>({
     travelStyle: preferences?.travelStyle || "",
@@ -93,6 +92,10 @@ export function PreferencesPage() {
     climate: normalizeClimate(preferences?.climate),
     interests: preferences?.interests || [],
     destinationHint: preferences?.destinationHint || "",
+    tripNotes: preferences?.tripNotes || "",
+    destinationType: preferences?.destinationType || "any",
+    dietaryNeeds: preferences?.dietaryNeeds || "",
+    accessibility: preferences?.accessibility || false,
   });
 
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(false);
@@ -111,14 +114,7 @@ export function PreferencesPage() {
     preferencesApi
       .get()
       .then((pref) => {
-        const mapped = {
-          travelStyle: pref.travel_style || "",
-          budget: normalizeBudget(pref.budget),
-          tripDuration: pref.trip_duration,
-          climate: normalizeClimate(pref.preferred_climate),
-          interests: pref.interests,
-          destinationHint: initialDestinationHint.current,
-        };
+        const mapped = mapPreferences(pref);
         setFormData(mapped);
         savePreferences(mapped);
       })
@@ -146,21 +142,15 @@ export function PreferencesPage() {
       const saved = await preferencesApi.save({
         budget: normalizeBudget(formData.budget),
         preferred_climate: normalizeClimate(formData.climate),
-        destination_type: "any",
+        destination_type: formData.destinationType,
         trip_duration: formData.tripDuration,
         travel_style: formData.travelStyle,
         interests: formData.interests,
-        dietary_needs: null,
-        accessibility: false,
+        dietary_needs: formData.dietaryNeeds || null,
+        accessibility: formData.accessibility,
+        planning_details: {destinationHint:formData.destinationHint,tripNotes:formData.tripNotes},
       });
-      const mapped = {
-        travelStyle: saved.travel_style,
-        budget: normalizeBudget(saved.budget),
-        tripDuration: saved.trip_duration,
-        climate: normalizeClimate(saved.preferred_climate),
-        interests: saved.interests,
-        destinationHint: formData.destinationHint,
-      };
+      const mapped = mapPreferences(saved);
       setFormData(mapped);
       savePreferences(mapped);
       setSaveSuccess(true);
@@ -316,18 +306,28 @@ export function PreferencesPage() {
               <textarea
                 id="destination-idea"
                 value={formData.destinationHint}
-                maxLength={500}
+                maxLength={150}
                 onChange={(e) =>
                   setFormData({ ...formData, destinationHint: e.target.value })
                 }
                 rows={3}
                 className="travel-input"
-                placeholder="Little coastal towns, good food, and somewhere to watch the sunset…"
+                placeholder="A city and country, such as Puducherry, India"
               />
               <p className="form-hint">
-                Optional. We'll bring this idea into your next plan in this tab.
+                Optional. Saved with your account; you'll confirm the intended place when planning.
               </p>
             </div>
+            <div className="travel-field mb-7">
+              <label htmlFor="trip-notes">Ideas for your trip</label>
+              <textarea id="trip-notes" value={formData.tripNotes} maxLength={1000} className="travel-input" rows={3} placeholder="Quiet mornings, local food, galleries, or anything else that matters." onChange={event=>setFormData({...formData,tripNotes:event.target.value})}/>
+            </div>
+            <div className="travel-field mb-7">
+              <label htmlFor="dietary-needs">Dietary needs and allergies</label>
+              <input id="dietary-needs" value={formData.dietaryNeeds} maxLength={255} className="travel-input" onChange={event=>setFormData({...formData,dietaryNeeds:event.target.value})}/>
+              <p className="form-hint">These needs stay in your plan. Restaurant kitchens and allergen safety still require direct confirmation.</p>
+            </div>
+            <label className="flex items-center gap-3 mb-8"><input type="checkbox" checked={formData.accessibility} onChange={event=>setFormData({...formData,accessibility:event.target.checked})}/>Step-free access is required</label>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <p className="form-hint max-w-60">
                 You can change these whenever your plans do.

@@ -1,6 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict, PlainSerializer
 from typing import Optional, List, Any, Literal, Annotated
-from datetime import datetime
+from datetime import datetime, timezone
+
+UTCDateTime = Annotated[datetime, PlainSerializer(lambda value: (value if value.tzinfo else value.replace(tzinfo=timezone.utc)).isoformat(), return_type=str, when_used="json")]
 
 Budget = Literal["budget", "moderate", "luxury"]
 Climate = Literal["any", "tropical", "temperate", "arid", "cold", "mediterranean"]
@@ -57,12 +59,18 @@ class UserOut(BaseModel):
     username: str
     full_name: Optional[str]
     is_active: bool
-    created_at: datetime
+    created_at: UTCDateTime
 
     model_config = {"from_attributes": True}
 
 
 # ── Preferences ───────────────────────────────────────────────────────────────
+
+class PreferenceDetails(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    destinationHint: str = Field("", max_length=150)
+    tripNotes: str = Field("", max_length=1000)
+
 
 class PreferenceUpsert(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -74,13 +82,14 @@ class PreferenceUpsert(BaseModel):
     interests: List[Interest] = Field(default_factory=list, max_length=20)
     dietary_needs: Optional[str] = Field(None, max_length=255)
     accessibility: bool = False
+    planning_details: PreferenceDetails = Field(default_factory=PreferenceDetails)
 
 
 class PreferenceOut(PreferenceUpsert):
     id: int
     user_id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: UTCDateTime
+    updated_at: UTCDateTime
 
     model_config = {"from_attributes": True}
 
@@ -133,22 +142,17 @@ class DayPlan(BaseModel):
     accommodation: Optional[str] = None
     estimated_cost: Optional[float] = None
     tips: Optional[str] = None
+    date: Optional[str] = None
+    activities: list[dict] = Field(default_factory=list)
+    travel_legs: list[dict] = Field(default_factory=list)
+    user_note: str = ""
+    place: dict | None = None
+    user_edited_slots: list[str] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class ItineraryGenerateRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    budget: Budget
-    preferred_climate: Climate = "any"
-    destination_type: DestinationType = "any"
-    trip_duration: int = Field(7, ge=1, le=30)
-    travel_style: TravelStyle = "solo"
-    interests: List[Interest] = Field(default_factory=list, max_length=20)
-    destination_hint: Optional[str] = Field(None, max_length=500, description="A requested destination, which takes priority over recommendation filters. Leave blank for recommendations.")
-
-
-class ItineraryOut(BaseModel):
+class ItinerarySummary(BaseModel):
     id: int
     user_id: int
     destination_id: Optional[int]
@@ -158,15 +162,20 @@ class ItineraryOut(BaseModel):
     budget: str
     travel_style: Optional[str]
     summary: Optional[str]
-    full_itinerary: str
     status: str
     is_favorite: bool
     rating: Optional[int]
     user_notes: Optional[str]
-    generated_at: datetime
-    updated_at: datetime
+    generated_at: UTCDateTime
+    updated_at: UTCDateTime
+    image_url: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class ItineraryOut(ItinerarySummary):
+    full_itinerary: str
+    plan: dict = Field(default_factory=dict)
 
 
 class ItineraryWithDays(ItineraryOut):

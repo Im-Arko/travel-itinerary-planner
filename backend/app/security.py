@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import secrets
 import time
+import ipaddress
 import anyio
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy import delete, update
@@ -49,12 +50,26 @@ def enforce_limit(db: Session, scope: str, subject: str, maximum: int, seconds: 
 
 
 def auth_limit(request: Request, db: Session = Depends(get_db)):
-    # Only the server's client address is used. Never trust arbitrary forwarded headers.
-    enforce_limit(db, "auth-ip", request.client.host if request.client else "unknown", 20, 900)
+    enforce_limit(db, "auth-ip", client_address(request), 20, 900)
 
 
-def generation_limit(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    enforce_limit(db, "generation", str(user.id), 5, 3600)
+def client_address(request: Request) -> str:
+    peer = request.client.host if request.client else "unknown"
+    try:
+        trusted = [ipaddress.ip_network(value.strip()) for value in settings.trusted_proxy_networks.split(",") if value.strip()]
+        address = ipaddress.ip_address(peer)
+        if not any(address in network for network in trusted):
+            return str(address)
+        forwarded = request.headers.get("x-forwarded-for", "")
+        if len(forwarded) > 1024:
+            return peer
+        for value in reversed(forwarded.split(",")):
+            candidate = ipaddress.ip_address(value.strip())
+            if not any(candidate in network for network in trusted):
+                return str(candidate)
+    except ValueError:
+        pass
+    return peer
 
 
 def search_limit(user: User = Depends(get_current_user), db: Session = Depends(get_db)):

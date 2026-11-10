@@ -112,9 +112,9 @@ export function HomePage() {
                   text-white mb-6
                 "
               >
-                Your perfect trip,
+                Your next trip,
                 <span className="block font-script font-semibold text-primary-300">
-                  planned for you
+                  planned with care
                 </span>
               </h1>
 
@@ -127,14 +127,15 @@ export function HomePage() {
                 "
               >
                 Discover destinations, hidden gems, and
-                personalized itineraries crafted by AI
-                around your travel style.
+                source-backed plans with AI-assisted selection
+                around your travel style. Prices and availability stay clearly marked.
               </p>
 
               {/* TAGS */}
               <div className="flex flex-wrap justify-center lg:justify-start gap-3 mb-8">
                 {preferenceTags.map((tag) => (
-                  <button
+                  <Link
+                    to={`/generate?interest=${encodeURIComponent(tag.key)}`}
                     key={tag.key}
                     className="
                       group flex items-center gap-1.5
@@ -151,7 +152,7 @@ export function HomePage() {
                   >
                     <InterestIcon interest={tag.key} />
                     {tag.label}
-                  </button>
+                  </Link>
                 ))}
               </div>
 

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from ..time_utils import utcnow
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -31,6 +31,7 @@ def _to_out(pref: UserPreference) -> PreferenceOut:
         interests=interests,
         dietary_needs=pref.dietary_needs,
         accessibility=bool(pref.accessibility),
+        planning_details=pref.planning_details or {},
         created_at=pref.created_at,
         updated_at=pref.updated_at,
     )
@@ -69,15 +70,15 @@ def upsert_preferences(
         pref = UserPreference(user_id=current_user.id)
         db.add(pref)
 
-    pref.budget = payload.budget
-    pref.preferred_climate = payload.preferred_climate
-    pref.destination_type = payload.destination_type
-    pref.trip_duration = payload.trip_duration
-    pref.travel_style = payload.travel_style
-    pref.interests = json.dumps(payload.interests)
-    pref.dietary_needs = payload.dietary_needs
-    pref.accessibility = payload.accessibility
-    pref.updated_at = datetime.utcnow()
+    fields = payload.model_fields_set if pref.id is not None else set(type(payload).model_fields)
+    for field in fields:
+        value = getattr(payload, field)
+        if field == "interests":
+            value = json.dumps(value)
+        elif field == "planning_details":
+            value = value.model_dump()
+        setattr(pref, field, value)
+    pref.updated_at = utcnow()
 
     try:
         db.commit()
