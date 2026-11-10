@@ -1,6 +1,7 @@
 -r requirements-core.txt
 
-# Optional ML services are loaded only when destination search/generation is used.
-# LangChain was unused and pulled in vulnerable transitive dependencies.
-sentence-transformers==5.7.0
-torch==2.14.1
+# Small CPU inference runtime; no Torch/Transformers or executable model code.
+onnxruntime==1.31.1
+tokenizers==0.23.3
+numpy==2.5.4
+huggingface-hub==2.2.0

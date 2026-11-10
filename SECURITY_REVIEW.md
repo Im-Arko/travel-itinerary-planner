@@ -2,7 +2,7 @@
 
 The 39 generator findings and remaining external-data/hosting limits are tracked in [GENERATOR_FIXES.md](GENERATOR_FIXES.md). The mock generator is removed; actual AI is constrained to sourced nearby attraction IDs. Dietary/accessibility requirements are preserved without claiming unknown venues are safe. Invalid or failed provider output is not saved or charged as a successful plan.
 
-The new suite passes 50 backend tests and 11 interface/request tests. Typecheck, lint and the frontend build pass; npm and the installed Python environment report no known vulnerabilities. Real Google-provider verification passed for Puducherry, Paris in Texas and Zurich, including idempotency, editing, safety preferences and individual-day regeneration. Test accounts were removed.
+The new suite passes 54 backend tests and 11 interface/request tests. Typecheck, lint and the frontend build pass; npm and the installed Python environment report no known vulnerabilities. Real Google-provider verification passed for Puducherry, Paris in Texas and Zurich, including idempotency, editing, safety preferences and individual-day regeneration. Test accounts were removed.
 
 Supabase and local MariaDB received the additive planner migration after private backups. Hosted original counts remain 13 users, 14 itineraries and 86 days; local original counts remain 13 users, 12 itineraries and 72 days. All 65 embeddings on each database were rebuilt from the pinned model revision. Supabase has RLS on all nine app tables, no security-advisor findings, and both missing foreign-key indexes are added. Runtime roles retain CRUD only and verified TLS.
 

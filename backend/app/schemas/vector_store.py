@@ -1,6 +1,6 @@
 """Semantic search using JSON embeddings in the application's SQL database.
 
-Only operator-configured Sentence Transformer models run locally. There is no
+Only the pinned MiniLM ONNX model runs locally. There is no
 separate vector server, remote collection configuration, pickle, or executable
 model configuration supplied by API clients.
 """
@@ -9,6 +9,7 @@ import math
 from threading import Lock
 from typing import Optional
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from ..config import get_settings
 from ..database.models import Destination, DestinationEmbedding
 from ..database.session import release_read_transaction
@@ -22,12 +23,11 @@ def _get_embedder():
     global _embedder
     with _embedder_lock:
         if _embedder is None:
-            from sentence_transformers import SentenceTransformer
-            _embedder = SentenceTransformer(
-                settings.embedding_model, trust_remote_code=False,
-                revision=settings.embedding_revision,
-                model_kwargs={"use_safetensors": True},
-            )
+            from ..services.embeddings import MiniLMEmbedder
+            try:
+                _embedder = MiniLMEmbedder(settings.embedding_model, settings.embedding_revision)
+            except Exception:
+                raise HTTPException(503, "Semantic search is temporarily unavailable. Please retry.") from None
     return _embedder
 
 
@@ -66,8 +66,8 @@ def ingest_destinations(db: Session, destination_ids: Optional[list[int]] = None
     embedder = _get_embedder()
     encoded = []
     # Keep inference outside the write transaction and bound model batch memory.
-    for offset in range(0, len(documents), 64):
-        batch = documents[offset:offset + 64]
+    for offset in range(0, len(documents), 16):
+        batch = documents[offset:offset + 16]
         vectors = embedder.encode([document for _, document in batch],
                                   show_progress_bar=False, normalize_embeddings=True)
         encoded.extend((destination_id, document, _validated_vector(values))

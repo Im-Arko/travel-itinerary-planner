@@ -13,6 +13,7 @@ from .config import get_settings
 from .security import RequestProtection
 from .routers import auth, preferences, destinations, itineraries, planning
 from .services import ai_planner
+from .services.embeddings import snapshot_available
 
 settings = get_settings()
 app = FastAPI(
@@ -68,7 +69,10 @@ def ready():
     ai_configured = ai_planner.available()
     if settings.app_env == "production" and not ai_configured:
         return JSONResponse(status_code=503, content={"status": "degraded", "database": "available", "ai": "not_configured"})
-    return {"status": "ok", "database": "available", "ai": "configured" if ai_configured else "not_configured", "guided": "available"}
+    cached = snapshot_available(settings.embedding_model, settings.embedding_revision)
+    if settings.app_env == "production" and not cached:
+        return JSONResponse(status_code=503, content={"status":"degraded","database":"available","ai":"configured","semantic":"model_not_cached"})
+    return {"status": "ok", "database": "available", "ai": "configured" if ai_configured else "not_configured", "guided": "available", "semantic":"model_cached" if cached else "model_not_cached"}
 
 
 @app.get("/", tags=["System"])

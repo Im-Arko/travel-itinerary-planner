@@ -13,3 +13,5 @@ Attraction descriptions link to Wikipedia source pages. Current Google Search re
 Run `npm ci` and `npm run dev` for the frontend. The local API is `http://127.0.0.1:8001`. Backend setup, planner v2 migrations, provider configuration and verification are documented in [DEPLOYMENT.md](DEPLOYMENT.md). The 39-item audit follow-up is in [GENERATOR_FIXES.md](GENERATOR_FIXES.md).
 
 The interface uses local SVG interest artwork and self-hosted travel typography: Manrope for UI text, Caveat for handwritten accents, Alfa Slab One for retro headings, and Saira Stencil One for stamps. Font licenses are included in `public/fonts`.
+
+Semantic search uses the pinned MiniLM model through a small CPU ONNX runtime. It does not load Torch or Transformers at request time.

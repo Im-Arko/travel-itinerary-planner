@@ -40,15 +40,15 @@ The planner was replaced with a source-bound pipeline. The table distinguishes c
 | 32 | Zero becomes null | Explicit null checks preserve genuine zero values. |
 | 33 | Rating cannot be cleared | PATCH uses supplied fields; explicit null clears rating/notes. |
 | 34 | Misleading photos / N+1 | Plan carries a photo of an included attraction, with creator/license/source credits, or an explicitly labelled local SVG. Removed per-card photo lookups and generic destination fallback photos. |
-| 35 | Weak readiness / cold startup | `/ready` checks all required columns/read access and AI configuration; Render health-check path confirmed `/ready`. Model snapshot built into image. **Free Render idle spin-down remains a platform limit.** |
-| 36 | Unpinned ML artifacts | Torch 2.14.1 CPU image and exact model SHA pinned; all 65 local/hosted embeddings rebuilt with that revision, mismatched rows excluded from search. |
+| 35 | Weak readiness / cold startup | `/ready` checks all required columns/read access and AI configuration; Render health-check path confirmed `/ready`. Model snapshot built into image; lightweight ONNX inference replaces the observed 50.7-second Torch cold import. Numerical parity with the original encoder exceeds 0.99999 cosine similarity. **Free Render idle spin-down remains a platform limit.** |
+| 36 | Unpinned ML artifacts | Removed the heavy Torch/Transformers runtime; ONNX Runtime/tokenizer versions and exact model SHA are pinned; all 65 local/hosted embeddings rebuilt with that revision, mismatched rows excluded from search. |
 | 37 | Two unindexed foreign keys | Both indexes migrated on local MariaDB and Supabase; performance advisor no longer reports unindexed foreign keys. |
-| 38 | Missing quality/UI/provider tests and stale docs | 50 backend regressions, 11 interface/request tests, real-provider verifier with disposable account, updated deployment/security/provider/migration instructions. Browser editor timed out; actual visual verification is recorded separately when available. |
+| 38 | Missing quality/UI/provider tests and stale docs | 54 backend regressions, 11 interface/request tests, real-provider verifier with disposable account, updated deployment/security/provider/migration instructions. Browser editor timed out; actual visual verification is recorded separately when available. |
 | 39 | Dev dependency vulnerabilities | ESLint/toolchain updates and targeted overrides; npm audit reports zero known vulnerabilities. Python installed-environment audit also reports zero. |
 
 ## Verification and data preservation
 
-- Backend: `python -m unittest discover -s backend/tests -v` — 50 passed.
+- Backend: `python -m unittest discover -s backend/tests -v` — 54 passed.
 - Frontend: typecheck, lint, build, and `npm test` — 11 passed; npm audit zero findings.
 - `backend/verify_planner.py` passed against the native API with actual Google responses for Puducherry, Paris/Texas and Zurich, including citations, request identity, source membership, zero budgets, editing, clearing ratings and one-day regeneration. Disposable account and generated trips removed.
 - Supabase migration `20261110201831_planner_v2.sql` applied after a private verified backup. Original hosted records: 13 users, 14 itineraries, 86 days; 65 pinned embeddings and 9 tables protected by RLS. Security advisor: no findings. Unused-index information on a small database is not a reason to remove foreign-key indexes.

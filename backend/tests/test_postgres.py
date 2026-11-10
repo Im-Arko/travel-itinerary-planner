@@ -65,6 +65,17 @@ class PostgreSQLTests(unittest.TestCase):
             self.assertNotIn("private", response.text)
             self.assertEqual(client.get("/health").status_code, 200)
 
+    def test_production_readiness_requires_the_bundled_search_model(self):
+        from fastapi.testclient import TestClient
+        from backend.app import main
+        from unittest.mock import MagicMock
+        with TestClient(main.app) as client, patch.object(main.engine,'connect',return_value=MagicMock()), patch.object(main.settings,'app_env','production'), patch.object(main.ai_planner,'available',return_value=True), patch.object(main,'snapshot_available',return_value=False) as cache:
+            response=client.get('/ready')
+            self.assertEqual(response.status_code,503)
+            self.assertEqual(response.json()['semantic'],'model_not_cached')
+            cache.return_value=True
+            self.assertEqual(client.get('/ready').status_code,200)
+
 
 if __name__ == "__main__":
     unittest.main()
